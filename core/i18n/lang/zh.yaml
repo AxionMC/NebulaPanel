@@ -1,4 +1,4 @@
-﻿# 基础错误
+# 基础错误
 ErrInvalidParams: "请求参数错误: {{ .detail }}"
 ErrTokenParse: "Token 生成错误: {{ .detail }}"
 ErrInitialPassword: "原密码错误"

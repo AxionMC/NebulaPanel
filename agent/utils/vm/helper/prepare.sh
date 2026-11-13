@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 helper_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

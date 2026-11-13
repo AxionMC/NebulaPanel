@@ -1,4 +1,4 @@
-﻿import { Layout } from '@/routers/constant';
+import { Layout } from '@/routers/constant';
 import { GlobalStore } from '@/store';
 
 const aiRouter = {

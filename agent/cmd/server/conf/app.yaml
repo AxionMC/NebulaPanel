@@ -1,4 +1,4 @@
-﻿base:
+base:
   install_dir: /opt
   mode: dev
   is_demo: false

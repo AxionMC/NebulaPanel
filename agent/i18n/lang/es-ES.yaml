@@ -1,4 +1,4 @@
-﻿# errores básicos
+# errores básicos
 ErrInvalidParams: 'Solicitud inválida: {{ .detail }}'
 ErrMcpGatewayArgsParse: 'Formato de argumentos personalizados de MCP no válido'
 ErrMcpGatewayArgsConflict: 'El argumento {{ .name }} está gestionado por NebulaPanel y no puede definirse en los argumentos personalizados'

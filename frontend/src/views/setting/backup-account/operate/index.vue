@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DrawerPro v-model="drawerVisible" :header="title + $t('setting.backupAccount')" @close="handleClose" size="large">
         <el-form @submit.prevent ref="formRef" v-loading="loading" label-position="top" :model="dialogData.rowData">
             <el-form-item :label="$t('commons.table.name')" prop="name" :rules="Rules.requiredInput">

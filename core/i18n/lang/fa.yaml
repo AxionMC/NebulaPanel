@@ -1,4 +1,4 @@
-﻿# خطاهای پایه
+# خطاهای پایه
 ErrInvalidParams: "پارامترهای درخواست نامعتبر: {{ .detail }}"
 ErrTokenParse: "خطا در تولید توکن: {{ .detail }}"
 ErrInitialPassword: "رمز عبور اولیه اشتباه است"

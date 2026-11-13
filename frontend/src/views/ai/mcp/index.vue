@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <RouterButton :buttons="buttons" />
 </template>
 

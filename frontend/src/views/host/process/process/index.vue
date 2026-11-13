@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div>
         <FireRouter />
         <LayoutContent :title="$t('menu.process', 2)" v-loading="processStore.psLoading">

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div>
         <FireRouter />
         <DockerGuardStatus :base="data.base" @operate="operate" @refresh="search" @cleanup="cleanupBackend" />

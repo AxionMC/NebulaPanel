@@ -1,4 +1,4 @@
-﻿# OpenResty Dynamic Module Diagnostics
+# OpenResty Dynamic Module Diagnostics
 
 This script collects diagnostics from an installed NebulaPanel OpenResty instance.
 

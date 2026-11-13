@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div>
         <NoSuchService v-if="backendUnavailable" :name="backendName">
             <i18n-t keypath="firewall.selectedBackendNotInstalled" tag="span">

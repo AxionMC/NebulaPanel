@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DrawerPro
         v-model="visible"
         :header="item ? $t('commons.button.edit') : $t('apiKeyManagement.create')"

@@ -1,4 +1,4 @@
-﻿# 基本エラー
+# 基本エラー
 ErrInvalidParams: '不正なリクエスト: {{ .detail }}'
 ErrMcpGatewayArgsParse: 'MCP カスタム引数の形式が正しくありません'
 ErrMcpGatewayArgsConflict: '引数 {{ .name }} は NebulaPanel によって管理されているため、カスタム引数には設定できません'

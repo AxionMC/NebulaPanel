@@ -1,4 +1,4 @@
-﻿# ralat asas
+# ralat asas
 ErrInvalidParams: 'Permintaan tidak sah: {{ .detail }}'
 ErrTokenParse: 'Token tidak sah: {{ .detail }}'
 ErrInitialPassword: 'Kata laluan asal salah'

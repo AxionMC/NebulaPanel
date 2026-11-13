@@ -1,4 +1,4 @@
-﻿# Contributing
+# Contributing
 
 As a contributor, you should agree that:
 

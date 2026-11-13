@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div>
         <LayoutContent v-loading="loading" v-if="!isRecordShow" :title="$t('menu.cronjob')">
             <template #leftToolBar>

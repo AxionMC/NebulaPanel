@@ -1,4 +1,4 @@
-﻿# 基礎錯誤
+# 基礎錯誤
 ErrInvalidParams: '請求參數錯誤: {{ .detail }}'
 ErrMcpGatewayArgsParse: 'MCP 自訂參數格式錯誤'
 ErrMcpGatewayArgsConflict: '參數 {{ .name }} 由 NebulaPanel 管理，不能在自訂參數中設定'

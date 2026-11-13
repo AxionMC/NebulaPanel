@@ -1,4 +1,4 @@
-﻿import type { PanelMCP } from '@/api/interface/panel-mcp';
+import type { PanelMCP } from '@/api/interface/panel-mcp';
 import { isAxiosError } from 'axios';
 
 export const DEFAULT_MCP_DOCKER_IMAGE = 'NebulaPanel/mcp-server:v2.0.0';

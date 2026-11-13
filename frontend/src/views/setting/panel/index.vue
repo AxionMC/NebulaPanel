@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div v-loading="loading">
         <LayoutContent :title="$t('setting.panel')" :divider="true">
             <template #main>

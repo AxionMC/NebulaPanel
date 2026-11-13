@@ -1,4 +1,4 @@
-﻿# 기본 오류
+# 기본 오류
 ErrInvalidParams: '잘못된 요청: {{ .detail }}'
 ErrTokenParse: '토큰 오류: {{ .detail }}'
 ErrInitialPassword: '원래 비밀번호가 틀립니다'

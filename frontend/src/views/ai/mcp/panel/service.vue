@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div v-if="status?.installed || (canManageService && status?.installTaskID)" class="app-status" v-loading="busy">
         <el-card>
             <div class="flex w-full min-w-0 flex-col gap-4 md:flex-row">

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DrawerPro v-model="open" :header="$t('xpack.user.userInfo')">
         <div v-loading="loading">
             <el-alert

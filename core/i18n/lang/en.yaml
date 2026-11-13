@@ -1,4 +1,4 @@
-﻿# base errors
+# base errors
 ErrInvalidParams: "Invalid request parameters: {{ .detail }}"
 ErrTokenParse: "Token generation error: {{ .detail }}"
 ErrInitialPassword: "Incorrect initial password"

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div :key="$route.fullPath" id="dashboard">
         <RouterButton
             show-expires-at

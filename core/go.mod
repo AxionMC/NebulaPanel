@@ -1,4 +1,4 @@
-﻿﻿module github.com/NebulaPanel/nebulapanel/core
+﻿module github.com/NebulaPanel/nebulapanel/core
 
 go 1.27.3
 

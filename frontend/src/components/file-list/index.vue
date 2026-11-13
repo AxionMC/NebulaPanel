@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DialogPro :title="$t('file.list')" size="w-60" v-model="open" @close="handleClose">
         <div>
             <div

@@ -1,4 +1,4 @@
-﻿import GlobalStore from '@/store/modules/global';
+import GlobalStore from '@/store/modules/global';
 
 export type CacheCategory = 'tabs' | 'pagination' | 'refresh' | 'search';
 export interface PanelCacheSettings {

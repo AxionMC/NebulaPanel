@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div v-loading="loading">
         <LayoutContent :title="$t('setting.diskClean')" :divider="true">
             <template #leftToolBar>

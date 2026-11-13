@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div
         class="file-management-page h-full"
         :class="{ 'is-drag-over': isDragOver }"

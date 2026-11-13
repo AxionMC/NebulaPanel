@@ -1,4 +1,4 @@
-﻿# base errors
+# base errors
 ErrInvalidParams: 'Bad request: {{ .detail }}'
 ErrMcpGatewayArgsParse: 'Invalid MCP custom argument format'
 ErrMcpGatewayArgsConflict: 'Argument {{ .name }} is managed by NebulaPanel and cannot be set in custom arguments'

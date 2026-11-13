@@ -1,4 +1,4 @@
-﻿﻿<template>
+﻿<template>
     <div v-loading="loading" class="w-full h-full flex items-center justify-center px-8">
         <div class="w-full flex-grow flex flex-col login-form">
             <div v-if="mfaShow">

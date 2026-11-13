@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div>
         <el-card class="router_card p-1 sm:p-0">
             <div class="flex w-full flex-col justify-start sm:items-center items-start sm:justify-between sm:flex-row">

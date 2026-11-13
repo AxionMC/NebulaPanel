@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="share-page" v-loading="initializing">
         <div class="share-card">
             <h1>{{ $t('file.shareLinkLabel') }}</h1>

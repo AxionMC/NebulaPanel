@@ -1,4 +1,4 @@
-﻿# базовые ошибки
+# базовые ошибки
 ErrInvalidParams: 'Неверный запрос: {{ .detail }}'
 ErrMcpGatewayArgsParse: 'Неверный формат пользовательских аргументов MCP'
 ErrMcpGatewayArgsConflict: 'Аргумент {{ .name }} управляется NebulaPanel и не может быть задан в пользовательских аргументах'

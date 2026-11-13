@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DrawerPro
         v-model="drawerVisible"
         :header="$t(mode === 'edit' ? 'firewall.edit' : 'firewall.create')"

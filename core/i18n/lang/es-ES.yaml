@@ -1,4 +1,4 @@
-﻿# errores básicos
+# errores básicos
 ErrInvalidParams: 'Solicitud inválida: {{ .detail }}'
 ErrTokenParse: 'Token inválido: {{ .detail }}'
 ErrInitialPassword: 'Contraseña original incorrecta'

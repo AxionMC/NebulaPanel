@@ -1,4 +1,4 @@
-﻿# temel hatalar
+# temel hatalar
 ErrInvalidParams: 'İstek geçersiz: {{ .detail }}'
 ErrTokenParse: 'Token hatası: {{ .detail }}'
 ErrInitialPassword: 'Orijinal şifre yanlış'

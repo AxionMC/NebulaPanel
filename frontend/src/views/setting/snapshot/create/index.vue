@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DrawerPro v-model="drawerVisible" :header="$t('setting.snapshot')" @close="handleClose" size="large">
         <fu-steps
             class="steps"

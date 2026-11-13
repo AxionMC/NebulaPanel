@@ -1,4 +1,4 @@
-﻿# erros básicos
+# erros básicos
 ErrInvalidParams: 'Requisição inválida: {{ .detail }}'
 ErrTokenParse: 'Erro de token: {{ .detail }}'
 ErrInitialPassword: 'Senha original incorreta'

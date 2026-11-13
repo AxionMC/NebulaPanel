@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DrawerPro v-model="drawerVisible" :header="$t('firewall.portWhiteList')" size="large">
         <template #content>
             <p class="input-help mb-3">{{ $t('firewall.whitelistConfigHelper') }}</p>

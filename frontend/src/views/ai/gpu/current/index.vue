@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div>
         <RouterMenu :history-disabled="historyDisabled" />
         <div>

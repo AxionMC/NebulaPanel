@@ -1,4 +1,4 @@
-﻿# ralat asas
+# ralat asas
 ErrInvalidParams: 'Permintaan tidak sah: {{ .detail }}'
 ErrMcpGatewayArgsParse: 'Format argumen tersuai MCP tidak sah'
 ErrMcpGatewayArgsConflict: 'Argumen {{ .name }} diurus oleh NebulaPanel dan tidak boleh ditetapkan dalam argumen tersuai'

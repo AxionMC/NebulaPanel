@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DrawerPro v-model="drawerVisible" header="Swap" @close="handleClose" size="large">
         <el-alert class="common-prompt" :closable="false" type="warning">
             <template #default>

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <LayoutContent :title="$t('xpack.vm.template')">
         <template #rightToolBar>
             <TableSearch v-model:searchName="searchName" @search="search" />

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div>
         <DialogPro v-model="open" class="level-up-pro" @close="handleClose">
             <div style="text-align: center" v-loading="loading">

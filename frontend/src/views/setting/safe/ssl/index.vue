@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DrawerPro v-model="drawerVisible" :header="$t('setting.panelSSL')" @close="handleClose" size="large">
         <el-form ref="formRef" label-position="top" :model="form" :rules="rules" v-loading="loading">
             <el-form-item :label="$t('setting.mode')" prop="ssl">

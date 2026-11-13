@@ -1,4 +1,4 @@
-﻿﻿export const footerNavigationKeys = ['learnMore', 'forum', 'documentation', 'project'] as const;
+﻿export const footerNavigationKeys = ['learnMore', 'forum', 'documentation', 'project'] as const;
 
 export type FooterNavigationKey = (typeof footerNavigationKeys)[number];
 

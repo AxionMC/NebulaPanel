@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div v-loading="loading" class="vm-environment-check">
         <div v-if="environmentLoaded" class="app-status card-interval">
             <el-card>

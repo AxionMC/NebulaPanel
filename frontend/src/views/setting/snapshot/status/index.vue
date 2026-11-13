@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DrawerPro v-model="drawerVisible" :header="$t('setting.recoverDetail')" @close="handleClose" size="small">
         <el-form label-position="top" v-loading="loading">
             <span class="card-title">{{ $t('commons.button.recover') }}</span>

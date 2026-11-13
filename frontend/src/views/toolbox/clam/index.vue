@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div>
         <LayoutContent v-loading="loading" v-if="!isRecordShow && !isSettingShow" :title="$t('toolbox.clam.clam')">
             <template #prompt>

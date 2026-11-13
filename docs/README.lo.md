@@ -1,4 +1,4 @@
-﻿<p align="center"><a href="https://github.com/AxionMC/NebulaPanel"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
+<p align="center"><a href="https://github.com/AxionMC/NebulaPanel"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
 
 <h3 align="center">ແຜງຄວບຄຸມ VPS ແບບໂອເພນຊອດ ພ້ອມການຮອງຮັບເອເຈນ AI ໃນຕົວ</h3>
 

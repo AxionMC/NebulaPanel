@@ -1,4 +1,4 @@
-﻿﻿# Translation Contribution Guide
+﻿# Translation Contribution Guide
 
 Thank you for helping translate NebulaPanel! A complete locale touches the frontend,
 the Core service, the Agent service, application-store metadata, and the project

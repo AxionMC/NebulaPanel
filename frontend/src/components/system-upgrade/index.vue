@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div>
         <div class="flex flex-wrap items-center">
             <div class="flex flex-wrap items-center">

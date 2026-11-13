@@ -1,4 +1,4 @@
-﻿# 基礎錯誤
+# 基礎錯誤
 ErrInvalidParams: "請求參數錯誤: {{ .detail }}"
 ErrTokenParse: "Token 產生錯誤: {{ .detail }}"
 ErrInitialPassword: "原密碼錯誤"

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <LayoutContent :title="$t('xpack.vm.network')">
         <template #leftToolBar>
             <el-button v-permission type="primary" :disabled="vmUnavailable" @click="openCreate">

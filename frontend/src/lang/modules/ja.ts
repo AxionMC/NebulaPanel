@@ -1,4 +1,4 @@
-﻿import { getFuLocaleMessage } from '@/lang/fu';
+import { getFuLocaleMessage } from '@/lang/fu';
 
 const message = {
     apiKeyManagement: {

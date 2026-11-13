@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div :id="id" ref="LineChartRef" :style="{ height: height, width: width }" />
 </template>
 <script lang="ts" setup>

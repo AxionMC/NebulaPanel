@@ -1,4 +1,4 @@
-﻿# خطاهای پایه
+# خطاهای پایه
 ErrInvalidParams: 'درخواست نامعتبر: {{ .detail }}'
 ErrMcpGatewayArgsParse: 'قالب آرگومان‌های سفارشی MCP نامعتبر است'
 ErrMcpGatewayArgsConflict: 'آرگومان {{ .name }} توسط NebulaPanel مدیریت می‌شود و نمی‌توان آن را در آرگومان‌های سفارشی تنظیم کرد'

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div>
         <el-form label-position="left" label-width="80px" @submit.prevent>
             <el-form-item :label="$t('database.isOn')">

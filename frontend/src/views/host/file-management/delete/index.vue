@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DialogPro v-model="open" :title="$t('commons.button.delete')" size="w-60" class="file-delete-dialog">
         <div v-loading="loading">
             <el-row>

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DialogPro
         v-model="visible"
         :title="initialize ? $t('firewall.initializeFromFile') : $t('commons.button.import')"

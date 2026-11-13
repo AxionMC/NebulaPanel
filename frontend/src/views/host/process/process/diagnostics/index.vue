@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div>
         <DrawerPro
             v-model="open"

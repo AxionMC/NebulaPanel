@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DrawerPro
         v-model="open"
         :header="$t('commons.button.' + mode)"

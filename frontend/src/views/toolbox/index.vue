@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div>
         <RouterButton :buttons="buttons">
             <template #route-button>

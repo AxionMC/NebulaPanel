@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DialogPro
         v-model="open"
         :size="isMobile ? 'full' : 'w-70'"

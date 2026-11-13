@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div v-loading="loading">
         <docker-status
             v-model:isActive="isActive"

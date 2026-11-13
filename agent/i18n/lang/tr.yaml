@@ -1,4 +1,4 @@
-﻿# temel hatalar
+# temel hatalar
 ErrInvalidParams: 'İstek geçersiz: {{ .detail }}'
 ErrMcpGatewayArgsParse: 'MCP özel bağımsız değişken biçimi geçersiz'
 ErrMcpGatewayArgsConflict: '{{ .name }} bağımsız değişkeni NebulaPanel tarafından yönetilir ve özel bağımsız değişkenlerde ayarlanamaz'

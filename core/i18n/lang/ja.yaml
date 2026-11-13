@@ -1,4 +1,4 @@
-﻿# 基本エラー
+# 基本エラー
 ErrInvalidParams: '不正なリクエスト: {{ .detail }}'
 ErrTokenParse: 'トークンエラー: {{ .detail }}'
 ErrInitialPassword: '元のパスワードが違います'

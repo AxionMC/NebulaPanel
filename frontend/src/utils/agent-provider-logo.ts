@@ -1,4 +1,4 @@
-﻿﻿import menuLogo from '../assets/images/NebulaPanel-menu-logo.svg?raw';
+﻿import menuLogo from '../assets/images/NebulaPanel-menu-logo.svg?raw';
 
 export interface AgentProviderLogo {
     src?: string;

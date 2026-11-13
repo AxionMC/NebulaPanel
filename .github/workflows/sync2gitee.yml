@@ -1,4 +1,4 @@
-﻿name: Synchronize to Gitee
+name: Synchronize to Gitee
 on: [push]
 jobs:
   repo-sync:

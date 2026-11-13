@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div>
         <LayoutContent v-loading="loading" :title="$t('setting.license')">
             <template #leftToolBar>

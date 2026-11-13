@@ -1,4 +1,4 @@
-﻿ErrInvalidParams: 'ຄຳຮ້ອງຂໍບໍ່ຖືກຕ້ອງ: {{ .detail }}'
+ErrInvalidParams: 'ຄຳຮ້ອງຂໍບໍ່ຖືກຕ້ອງ: {{ .detail }}'
 ErrMcpGatewayArgsParse: 'ຮູບແບບອາກິວເມັນ MCP ກຳນົດເອງບໍ່ຖືກຕ້ອງ'
 ErrMcpGatewayArgsConflict: 'ອາກິວເມັນ {{ .name }} ຖືກຈັດການໂດຍ NebulaPanel ແລະ ບໍ່ສາມາດຕັ້ງຄ່າໃນອາກິວເມັນກຳນົດເອງໄດ້'
 ErrTokenParse: 'ໂທເຄັນຜິດພາດ: {{ .detail }}'

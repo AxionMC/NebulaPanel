@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <DialogPro v-model="open" :title="$t('file.openWithVscode')" size="large" @close="handleClose">
         <div v-loading="loading" class="vscode-open space-y-4">
             <el-alert

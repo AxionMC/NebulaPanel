@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div v-if="recordShow" v-loading="loading">
         <div class="app-status card-interval">
             <el-card>

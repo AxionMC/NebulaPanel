@@ -1,4 +1,4 @@
-﻿import { Firewall } from '@/api/interface/firewall';
+import { Firewall } from '@/api/interface/firewall';
 import i18n from '@/lang';
 import { isValidAddressForFamily } from '@/views/host/firewall/utils/validation';
 

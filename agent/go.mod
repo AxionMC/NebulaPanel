@@ -1,4 +1,4 @@
-﻿﻿module github.com/NebulaPanel/nebulapanel/agent
+﻿module github.com/NebulaPanel/nebulapanel/agent
 
 go 1.27.3
 

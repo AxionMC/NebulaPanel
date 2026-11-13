@@ -1,4 +1,4 @@
-﻿# базовые ошибки
+# базовые ошибки
 ErrInvalidParams: 'Неверный запрос: {{ .detail }}'
 ErrTokenParse: 'Ошибка токена: {{ .detail }}'
 ErrInitialPassword: 'Исходный пароль неверен'

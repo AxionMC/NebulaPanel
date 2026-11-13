@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div>
         <div v-loading="fullPageLoading">
             <LayoutContent v-loading="loading" :title="$t('xpack.vm.title')">

@@ -1,4 +1,4 @@
-﻿# base errors
+# base errors
 ErrInvalidParams: "ພາລາມິເຕີຄຳຮ້ອງຂໍບໍ່ຖືກຕ້ອງ: {{ .detail }}"
 ErrTokenParse: "ເກີດຂໍ້ຜິດພາດໃນການສ້າງໂທເຄັນ: {{ .detail }}"
 ErrInitialPassword: "ລະຫັດຜ່ານເລີ່ມຕົ້ນບໍ່ຖືກຕ້ອງ"

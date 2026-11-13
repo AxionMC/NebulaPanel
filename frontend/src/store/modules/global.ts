@@ -1,4 +1,4 @@
-﻿﻿import { defineStore } from 'pinia';
+﻿import { defineStore } from 'pinia';
 import type { StoreDefinition } from 'pinia';
 import piniaPersistConfig from '@/config/pinia-persist';
 import { GlobalState } from '../interface';
