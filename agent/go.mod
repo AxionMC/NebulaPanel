@@ -4,7 +4,9 @@ go 1.27.3
 
 godebug multipathtcp=0
 
-replace github.com/go-acme/lego/v5 => github.com/NebulaPanel/lego/v5 v5.3.1
+// lego 使用 1Panel 的上游 fork（其 go.mod 仍声明 module github.com/go-acme/lego/v5，
+// 因此 replace 左值必须保持原名，右值指向真实存在的 fork 仓库）。
+replace github.com/go-acme/lego/v5 => github.com/1Panel-dev/lego/v5 v5.3.1
 
 require (
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
