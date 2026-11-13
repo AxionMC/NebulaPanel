@@ -40,6 +40,38 @@ npm run build:pro   # 生产构建
 
 ## 四、后端构建（Linux）
 
+### 方式一：一键构建脚本（推荐，自动装 Go + Node）
+
+```bash
+sudo bash scripts/build.sh
+```
+
+脚本会自动完成：识别发行版与架构 → 安装基础依赖 → 缺失时下载 Go 1.27.3 与 Node.js 20（可走国内镜像）→ 构建前端 → 编译 core 与 agent → 打包成 `build/NebulaPanel-linux-<arch>.tar.gz` 并生成 sha256。
+
+常用参数：
+
+| 参数 | 作用 |
+|------|------|
+| `--arch arm64` | 交叉编译到指定架构（默认取本机架构） |
+| `--skip-frontend` | 跳过前端，复用已有 `core/cmd/server/web` |
+| `--skip-deps` | 跳过系统依赖安装 |
+| `--mirror cn` | 强制使用国内镜像（goproxy.cn / npmmirror） |
+| `--diag` | 只打印环境和真实编译错误，不产出二进制 |
+
+产物与日志：
+
+```
+build/NebulaPanel-core-<arch>
+build/NebulaPanel-agent-<arch>
+build/NebulaPanel-linux-<arch>.tar.gz
+build/NebulaPanel-linux-<arch>.tar.gz.sha256
+build/build.log
+```
+
+编译失败时脚本会自动打印诊断段（`go version`、`go env`、目录清单、`go build` 完整输出），把这一段贴出来即可定位问题。
+
+### 方式二：手动编译
+
 在仓库根目录执行：
 
 ```bash
