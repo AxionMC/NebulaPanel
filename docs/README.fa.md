@@ -1,4 +1,4 @@
-﻿<p align="center"><a href="https://NebulaPanel.pro"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
+﻿<p align="center"><a href="https://github.com/AxionMC/NebulaPanel"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
 
 <h3 align="center">پنل کنترل سرور مجازی متن‌باز با پشتیبانی بومی از عامل‌های هوش مصنوعی</h3>
 
@@ -7,15 +7,9 @@
 </p>
 
 <p align="center">
-  <a href="https://trendshift.io/repositories/2462" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2462" alt="NebulaPanel%2FNebulaPanel | Trendshift" style="width: 240px; height: auto;" /></a>
-</p>
-
-<p align="center">
-  <a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://shields.io/github/license/NebulaPanel/NebulaPanel?color=%231890FF" alt="مجوز: GPL v3"></a>
-  <a href="https://app.codacy.com/gh/NebulaPanel/NebulaPanel"><img src="https://app.codacy.com/project/badge/Grade/da67574fd82b473992781d1386b937ef" alt="Codacy"></a>
-  <a href="https://discord.gg/bUpUqWqdRr"><img src="https://img.shields.io/discord/1318846410149335080?logo=discord&labelColor=%20%235462eb&logoColor=%20%23f5f5f5&color=%20%235462eb" alt="Discord"></a>
-  <a href="https://github.com/NebulaPanel/nebulapanel/releases"><img src="https://img.shields.io/github/v/release/NebulaPanel/NebulaPanel" alt="انتشار گیت‌هاب"></a>
-  <a href="https://github.com/NebulaPanel/NebulaPanel"><img src="https://img.shields.io/github/stars/NebulaPanel/NebulaPanel?color=%231890FF&style=flat-square" alt="ستاره‌ها"></a>
+  <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-7B2CBF.svg" alt="License: Apache 2.0"></a>
+  <a href="https://github.com/AxionMC/NebulaPanel/releases"><img src="https://img.shields.io/github/v/release/AxionMC/NebulaPanel" alt="انتشار گیت‌هاب"></a>
+  <a href="https://github.com/AxionMC/NebulaPanel"><img src="https://img.shields.io/github/stars/AxionMC/NebulaPanel?color=%237B2CBF&style=flat-square" alt="ستاره‌ها"></a>
 </p>
 
 <p align="center">
@@ -77,40 +71,21 @@ git clone https://github.com/AxionMC/NebulaPanel.git && cd NebulaPanel && sudo b
 پس از نصب، `http://<your-server-ip>:<port>/<security-path>` را در مرورگر خود باز کنید.  
 در صورت نیاز به دریافت اطلاعات ورود، دستور `npctl user-info` را از طریق SSH اجرا کنید.
 
-## تصویر صفحه
-
-
-## نسخه حرفه‌ای
-
-NebulaPanel OSS برای همیشه رایگان است. نسخه Pro ویژگی‌هایی را اضافه می‌کند که برای تیم‌ها و بارهای تولیدی طراحی شده‌اند:
-
-| ویژگی | OSS | Pro |
-|---------|:---:|:---:|
-| نصب یک‌کلیکی برنامه | ✅ | ✅ |
-| عامل‌های هوش مصنوعی (OpenClaw) | ۱ عامل | نامحدود |
-| WAF و امنیت پیشرفته | پایه | ✅ |
-| محافظت در برابر دستکاری وب‌سایت | ❌ | ✅ |
-| نظارت بر در دسترس بودن وب‌سایت | ❌ | ✅ |
-| مدیریت چند گره | ❌ | ✅ |
-| لوگو و تم سفارشی | ❌ | ✅ |
-| پشتیبانی اولویت‌دار | ❌ | ✅ |
-
-**از ۸۰ دلار در سال.** [مقایسه طرح‌ها و شروع دوره آزمایشی ۳۰ روزه رایگان →](https://NebulaPanel.pro/pricing)
-
 ## تاریخچه ستاره
 
-[![نمودار تاریخچه ستاره](https://api.star-history.com/svg?repos=NebulaPanel/NebulaPanel&type=Date)](https://star-history.com/#NebulaPanel/NebulaPanel&Date)
+[![نمودار تاریخچه ستاره](https://api.star-history.com/svg?repos=AxionMC/NebulaPanel&type=Date)](https://star-history.com/#AxionMC/NebulaPanel&Date)
 
 ## انجمن و پشتیبانی
 
-- **Discord** — [به انجمن بپیوندید](https://discord.gg/bUpUqWqdRr) برای راهنمایی، درخواست ویژگی و نمایش و گفتگو
-- **مستندات** — [NebulaPanel.pro/docs](https://NebulaPanel.pro/docs)
-- **مشکلات** — [مشکلات گیت‌هاب](https://github.com/NebulaPanel/nebulapanel/issues) برای گزارش باگ
+- **مستندات** — [Docs](https://github.com/AxionMC/NebulaPanel/blob/main/BUILD.md)
+- **مشکلات** — [مشکلات گیت‌هاب](https://github.com/AxionMC/NebulaPanel/issues) برای گزارش باگ
 
 ## امنیت
 
 آسیب‌پذیری پیدا کردید؟ لطفاً قبل از افشا، [SECURITY.md](/SECURITY.md) را مطالعه کنید.
 
-## مجوز
+## License
 
-تحت مجوز [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html) مجوز دارد.
+Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+
+Copyright (c) 2026 NebulaPanel contributors. All rights reserved.

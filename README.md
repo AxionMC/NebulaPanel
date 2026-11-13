@@ -102,9 +102,9 @@ NebulaPanel OSS is free forever. NebulaPanel Pro and Ent adds features built for
 
 ## Community & Support
 
-- **Discord** — [Join the community](https://discord.gg/nebulapanel) for help, feature requests, and show-and-tell
-- **Docs** — [NebulaPanel.pro/docs](https://NebulaPanel.pro/docs)
-- **Issues** — [GitHub Issues](https://github.com/NebulaPanel/nebulapanel/issues) for bug reports
+- **Docs** — [BUILD.md](BUILD.md) for build and deployment instructions
+- **Issues** — [GitHub Issues](https://github.com/AxionMC/NebulaPanel/issues) for bug reports and feature requests
+- **Discussions** — [GitHub Discussions](https://github.com/AxionMC/NebulaPanel/discussions) for questions and show-and-tell
 
 ## Security
 

@@ -1,16 +1,9 @@
-<p align="center"><a href="https://NebulaPanel.cn"><img src="http://NebulaPanel.oss-cn-hangzhou.aliyuncs.com/img/NebulaPanel-logo.png" alt="NebulaPanel" width="300" /></a></p>
+<p align="center"><a href="https://github.com/AxionMC/NebulaPanel"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
 <p align="center"><b>现代化、开源的 Linux 服务器运维管理面板</b></p>
 <p align="center">
-  <a href="https://trendshift.io/repositories/2462" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2462" alt="NebulaPanel%2FNebulaPanel | Trendshift" style="width: 180px; height: auto;" /></a>
-  <a href="https://hellogithub.com/repository/71791baf930149ac9b84e1acf186573f" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=71791baf930149ac9b84e1acf186573f&claim_uid=p8vB3kP5CMrthiL&theme=dark&theme=neutral" alt="Featured｜HelloGitHub" style="width: 180px; height: auto;" /></a>
-</p>
-<p align="center">
-  <a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://shields.io/github/license/NebulaPanel/NebulaPanel?color=%231890FF" alt="License: GPL v3"></a>
-  <a href="https://app.codacy.com/gh/NebulaPanel/NebulaPanel?utm_source=github.com&utm_medium=referral&utm_content=NebulaPanel/NebulaPanel&utm_campaign=Badge_Grade_Dashboard"><img src="https://app.codacy.com/project/badge/Grade/da67574fd82b473992781d1386b937ef" alt="Codacy"></a>
-  <a href="https://github.com/NebulaPanel/nebulapanel/releases"><img src="https://img.shields.io/github/v/release/NebulaPanel/NebulaPanel" alt="GitHub release"></a>
-  <a href="https://github.com/NebulaPanel/NebulaPanel"><img src="https://img.shields.io/github/stars/NebulaPanel/NebulaPanel?color=%231890FF&style=flat-square" alt="GitHub Stars"></a>
-  <a href="https://gitee.com/fit2cloud-feizhiyun/NebulaPanel"><img src="https://gitee.com/fit2cloud-feizhiyun/NebulaPanel/badge/star.svg?theme=gvp" alt="Gitee Stars"></a>
-  <a href="https://gitcode.com/feizhiyun/NebulaPanel"><img src="https://gitcode.com/feizhiyun/NebulaPanel/star/badge.svg" alt="GitCode Stars"></a><br>
+  <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-7B2CBF.svg" alt="License: Apache 2.0"></a>
+  <a href="https://github.com/AxionMC/NebulaPanel/releases"><img src="https://img.shields.io/github/v/release/AxionMC/NebulaPanel" alt="GitHub release"></a>
+  <a href="https://github.com/AxionMC/NebulaPanel"><img src="https://img.shields.io/github/stars/AxionMC/NebulaPanel?color=%237B2CBF&style=flat-square" alt="GitHub Stars"></a>
 </p>
 <p align="center">
   <a href="/README.md"><img alt="English" src="https://img.shields.io/badge/English-d9d9d9"></a>
@@ -31,9 +24,9 @@
   <a href="/docs/README.lo.md"><img alt="ພາສາລາວ" src="https://img.shields.io/badge/%E0%BA%9E%E0%BA%B2%E0%BA%AA%E0%BA%B2%E0%BA%A5%E0%BA%B2%E0%BA%A7-d9d9d9"></a>
 </p>
 
-
 ------------------------------
-## 什么是 NebulaPanel？
+
+什么是 NebulaPanel？
 
 NebulaPanel 是一款现代化的开源 Linux 服务器运维管理面板，同时也是轻量级的 AI 管理平台。通过直观易用的 Web 界面，NebulaPanel 帮助用户轻松掌控服务器全局：无论是 AI 智能体与本地大模型，还是网站、数据库、容器、文件及计划任务，所有核心运维场景均能一站式高效管理。
 
@@ -50,36 +43,19 @@ NebulaPanel 是一款现代化的开源 Linux 服务器运维管理面板，同�
 
 执行如下命令一键安装 NebulaPanel:
 
+```bash
 git clone https://github.com/AxionMC/NebulaPanel.git && cd NebulaPanel && sudo bash scripts/install.sh
+```
 
 如果是用于离线环境，推荐使用 [安装包方式](https://github.com/AxionMC/NebulaPanel/blob/main/BUILD.md) 进行安装部署。
 
 **学习资料**
 
 - [在线文档](https://github.com/AxionMC/NebulaPanel/blob/main/BUILD.md)
-- [社区论坛](https://bbs.fit2cloud.com/c/1p/7)
-
-## 版本对比
-
-https://NebulaPanel.cn/versions.html
-
-## 飞致云的其他明星项目
-
-- [MaxKB](https://github.com/NebulaPanel/MaxKB/) - 强大易用的企业级智能体平台
-- [Cordys](https://github.com/NebulaPanel/CordysCRM) - 新一代的开源 AI CRM 系统
-- [JumpServer](https://github.com/jumpserver/jumpserver/) - 广受欢迎的开源堡垒机
-- [Halo](https://github.com/halo-dev/halo/) - 强大易用的开源建站工具
-- [DataEase](https://github.com/dataease/dataease/) - 人人可用的开源数据可视化分析工具
-- [MeterSphere](https://github.com/metersphere/metersphere/) - 开源持续测试工具
-- [KubePi](https://github.com/NebulaPanel/KubePi/) - 现代化、开源的 K8s 面板
+- [社区论坛](https://github.com/AxionMC/NebulaPanel/issues)
 
 ## License
 
-Copyright (c) 2014-2026 [FIT2CLOUD 飞致云](https://fit2cloud.com/), All rights reserved.
+Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
-Licensed under The GNU General Public License version 3 (GPLv3)  (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
-
-<https://www.gnu.org/licenses/gpl-3.0.html>
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-
+Copyright (c) 2026 NebulaPanel contributors. All rights reserved.

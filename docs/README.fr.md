@@ -1,17 +1,9 @@
-<p align="center"><a href="https://NebulaPanel.pro"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
+<p align="center"><a href="https://github.com/AxionMC/NebulaPanel"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
 <p align="center"><b>Outil de gestion de serveurs Linux basé sur le web le mieux noté</b></p>
 <p align="center">
-  <a href="https://trendshift.io/repositories/2462" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2462" alt="NebulaPanel%2FNebulaPanel | Trendshift" style="width: 180px; height: auto;" /></a>
-  <a href="https://www.producthunt.com/posts/NebulaPanel?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-NebulaPanel" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=639696&theme=light" alt="NebulaPanel - Top&#0045;Rated&#0032;web&#0045;based&#0032;Linux&#0032;server&#0032;management&#0032;tool | Product Hunt" style="width: 180px; height: auto;" /></a>
-</p>
-<p align="center">
-  <a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://shields.io/github/license/NebulaPanel/NebulaPanel?color=%231890FF" alt="License: GPL v3"></a>
-  <a href="https://app.codacy.com/gh/NebulaPanel/NebulaPanel?utm_source=github.com&utm_medium=referral&utm_content=NebulaPanel/NebulaPanel&utm_campaign=Badge_Grade_Dashboard"><img src="https://app.codacy.com/project/badge/Grade/da67574fd82b473992781d1386b937ef" alt="Codacy"></a>
-  <a href="https://discord.gg/bUpUqWqdRr" target="_blank">
-        <img src="https://img.shields.io/discord/1318846410149335080?logo=discord&labelColor=%20%235462eb&logoColor=%20%23f5f5f5&color=%20%235462eb"
-            alt="chat on Discord"></a>  
-  <a href="https://github.com/NebulaPanel/nebulapanel/releases"><img src="https://img.shields.io/github/v/release/NebulaPanel/NebulaPanel" alt="GitHub release"></a>
-  <a href="https://github.com/NebulaPanel/NebulaPanel"><img src="https://img.shields.io/github/stars/NebulaPanel/NebulaPanel?color=%231890FF&style=flat-square" alt="Stars"></a><br>
+  <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-7B2CBF.svg" alt="License: Apache 2.0"></a>
+  <a href="https://github.com/AxionMC/NebulaPanel/releases"><img src="https://img.shields.io/github/v/release/AxionMC/NebulaPanel" alt="GitHub release"></a>
+  <a href="https://github.com/AxionMC/NebulaPanel"><img src="https://img.shields.io/github/stars/AxionMC/NebulaPanel?color=%237B2CBF&style=flat-square" alt="Stars"></a><br>
 </p>
 <p align="center">
   <a href="/README.md"><img alt="English" src="https://img.shields.io/badge/English-d9d9d9"></a>
@@ -52,22 +44,16 @@ git clone https://github.com/AxionMC/NebulaPanel.git && cd NebulaPanel && sudo b
 
 Veuillez vous référer à notre [documentation](https://github.com/AxionMC/NebulaPanel) pour plus d'informations.
 
-## Capture d'écran
-
-
 ## Histoire des étoiles
 
-[![Star History Chart](https://api.star-history.com/svg?repos=NebulaPanel/NebulaPanel&type=Date)](https://star-history.com/#NebulaPanel/NebulaPanel&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=AxionMC/NebulaPanel&type=Date)](https://star-history.com/#AxionMC/NebulaPanel&Date)
 
 ## Informations de sécurité
 
-Si vous découvrez un quelconque problème de sécurité, veuillez nous contacter via : wanghe@fit2cloud.com.
+Si vous découvrez un quelconque problème de sécurité, veuillez nous contacter via : https://github.com/AxionMC/NebulaPanel/issues.
 
-## Licence
+## License
 
-Ce logiciel est sous licence GNU General Public License version 3 (GPLv3) (la « Licence ») ; vous ne pouvez utiliser ce fichier que conformément à la Licence. Vous pouvez obtenir une copie de la Licence à l'adresse suivante :
+Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
-<https://www.gnu.org/licenses/gpl-3.0.html>
-
-Sauf si exigé par la loi en vigueur ou convenu par écrit, le logiciel distribué sous la Licence est distribué « tel quel », SANS GARANTIE D'AUCUNE SORTE, expresse ou implicite, et sans aucune condition. Consultez la Licence pour les termes spécifiques régissant les autorisations et les limitations prévues par la Licence.
-
+Copyright (c) 2026 NebulaPanel contributors. All rights reserved.

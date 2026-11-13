@@ -1,4 +1,4 @@
-﻿<p align="center"><a href="https://NebulaPanel.pro"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
+﻿<p align="center"><a href="https://github.com/AxionMC/NebulaPanel"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
 
 <h3 align="center">ແຜງຄວບຄຸມ VPS ແບບໂອເພນຊອດ ພ້ອມການຮອງຮັບເອເຈນ AI ໃນຕົວ</h3>
 
@@ -7,15 +7,9 @@
 </p>
 
 <p align="center">
-  <a href="https://trendshift.io/repositories/2462" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2462" alt="NebulaPanel%2FNebulaPanel | Trendshift" style="width: 240px; height: auto;" /></a>
-</p>
-
-<p align="center">
-  <a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://shields.io/github/license/NebulaPanel/NebulaPanel?color=%231890FF" alt="ໃບອະນຸຍາດ: GPL v3"></a>
-  <a href="https://app.codacy.com/gh/NebulaPanel/NebulaPanel"><img src="https://app.codacy.com/project/badge/Grade/da67574fd82b473992781d1386b937ef" alt="Codacy"></a>
-  <a href="https://discord.gg/bUpUqWqdRr"><img src="https://img.shields.io/discord/1318846410149335080?logo=discord&labelColor=%20%235462eb&logoColor=%20%23f5f5f5&color=%20%235462eb" alt="Discord"></a>
-  <a href="https://github.com/NebulaPanel/nebulapanel/releases"><img src="https://img.shields.io/github/v/release/NebulaPanel/NebulaPanel" alt="ລຸ້ນທີ່ເຜີຍແຜ່ໃນ GitHub"></a>
-  <a href="https://github.com/NebulaPanel/NebulaPanel"><img src="https://img.shields.io/github/stars/NebulaPanel/NebulaPanel?color=%231890FF&style=flat-square" alt="ດາວ"></a>
+  <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-7B2CBF.svg" alt="License: Apache 2.0"></a>
+  <a href="https://github.com/AxionMC/NebulaPanel/releases"><img src="https://img.shields.io/github/v/release/AxionMC/NebulaPanel" alt="ລຸ້ນທີ່ເຜີຍແຜ່ໃນ GitHub"></a>
+  <a href="https://github.com/AxionMC/NebulaPanel"><img src="https://img.shields.io/github/stars/AxionMC/NebulaPanel?color=%237B2CBF&style=flat-square" alt="ດາວ"></a>
 </p>
 
 <p align="center">
@@ -77,41 +71,21 @@ git clone https://github.com/AxionMC/NebulaPanel.git && cd NebulaPanel && sudo b
 ຫຼັງຈາກຕິດຕັ້ງແລ້ວ, ເປີດ `http://<your-server-ip>:<port>/<security-path>` ໃນເບຣົາເຊີ.  
 ໃຊ້ຄຳສັ່ງ `npctl user-info` ຜ່ານ SSH ຫາກຕ້ອງການເບິ່ງຂໍ້ມູນສຳລັບເຂົ້າລະບົບ.
 
-## ພາບໜ້າຈໍ
-
-
-## ຮຸ່ນ Pro
-
-NebulaPanel OSS ໃຊ້ງານໄດ້ຟຣີຕະຫຼອດໄປ. ຮຸ່ນ Pro ເພີ່ມຄຸນສົມບັດທີ່ອອກແບບສຳລັບທີມ ແລະ ວຽກລະດັບການຜະລິດ:
-
-| ຄຸນສົມບັດ | OSS | Pro |
-|---------|:---:|:---:|
-| ຕິດຕັ້ງແອັບດ້ວຍຄລິກດຽວ | ✅ | ✅ |
-| ເອເຈນ AI (OpenClaw) | 1 ເອເຈນ | ບໍ່ຈຳກັດ |
-| WAF ແລະ ຄວາມປອດໄພຂັ້ນສູງ | ພື້ນຖານ | ✅ |
-| ປ້ອງກັນການດັດແປງເວັບໄຊ | ❌ | ✅ |
-| ຕິດຕາມເວລາພ້ອມໃຊ້ງານຂອງເວັບໄຊ | ❌ | ✅ |
-| ການຈັດການຫຼາຍໂນດ | ❌ | ✅ |
-| ໂລໂກ້ ແລະ ຮູບແບບການສະແດງຜົນກຳນົດເອງ | ❌ | ✅ |
-| ການຊ່ວຍເຫຼືອລຳດັບຕົ້ນ | ❌ | ✅ |
-
-**ເລີ່ມຕົ້ນທີ່ $80/ປີ.** [ປຽບທຽບແຜນ ແລະ ເລີ່ມທົດລອງຟຣີ 30 ມື້ →](https://NebulaPanel.pro/pricing)
-
 ## ປະຫວັດດາວ
 
-[![ກຣາຟປະຫວັດດາວ](https://api.star-history.com/svg?repos=NebulaPanel/NebulaPanel&type=Date)](https://star-history.com/#NebulaPanel/NebulaPanel&Date)
+[![ກຣາຟປະຫວັດດາວ](https://api.star-history.com/svg?repos=AxionMC/NebulaPanel&type=Date)](https://star-history.com/#AxionMC/NebulaPanel&Date)
 
 ## ຊຸມຊົນ ແລະ ການຊ່ວຍເຫຼືອ
 
-- **Discord** — [ເຂົ້າຮ່ວມຊຸມຊົນ](https://discord.gg/bUpUqWqdRr) ເພື່ອຂໍຄວາມຊ່ວຍເຫຼືອ, ສະເໜີຄຸນສົມບັດ ແລະ ແບ່ງປັນຜົນງານ
-- **ເອກະສານ** — [NebulaPanel.pro/docs](https://NebulaPanel.pro/docs)
-- **ບັນຫາ** — [GitHub Issues](https://github.com/NebulaPanel/nebulapanel/issues) ສຳລັບລາຍງານບັກ
+- **ເອກະສານ** — [Docs](https://github.com/AxionMC/NebulaPanel/blob/main/BUILD.md)
+- **ບັນຫາ** — [GitHub Issues](https://github.com/AxionMC/NebulaPanel/issues) ສຳລັບລາຍງານບັກ
 
 ## ຄວາມປອດໄພ
 
 ພົບຊ່ອງໂຫວ່ບໍ? ກະລຸນາອ່ານ [SECURITY.md](/SECURITY.md) ກ່ອນເຜີຍແຜ່ຂໍ້ມູນ.
 
-## ໃບອະນຸຍາດ
+## License
 
-ໂຄງການນີ້ໃຊ້ [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html).
+Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
+Copyright (c) 2026 NebulaPanel contributors. All rights reserved.
