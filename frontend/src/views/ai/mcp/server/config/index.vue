@@ -1,0 +1,73 @@
+<template>
+    <DrawerPro v-model="open" :header="$t('menu.config')" @close="handleClose" size="normal">
+        <div
+            class="mcp-server-config w-full min-w-0 overflow-hidden rounded border border-solid border-[var(--el-border-color)]"
+        >
+            <codemirror
+                :autofocus="true"
+                :placeholder="$t('commons.msg.noneData')"
+                :indent-with-tab="true"
+                :tabSize="4"
+                style="height: 300px"
+                :lineWrapping="true"
+                :matchBrackets="true"
+                :styleActiveLine="true"
+                :extensions="extensions"
+                v-model="prettyJson"
+                :disabled="true"
+            />
+        </div>
+        <div class="mt-3 flex flex-wrap justify-end gap-2">
+            <CopyButton :content="prettyJson" :is-icon="false" />
+        </div>
+        <template #footer>
+            <el-button @click="handleClose">{{ $t('commons.button.close') }}</el-button>
+        </template>
+    </DrawerPro>
+</template>
+
+<script lang="ts" setup>
+import { AI } from '@/api/interface/ai';
+import { computed, ref } from 'vue';
+import { Codemirror } from 'vue-codemirror';
+import { javascript } from '@codemirror/lang-javascript';
+import { oneDark } from '@codemirror/theme-one-dark';
+import { useGlobalStore } from '@/composables/useGlobalStore';
+import { usePreferredDark } from '@vueuse/core';
+
+const { themeConfig } = useGlobalStore();
+const prefersDark = usePreferredDark();
+const extensions = computed(() => {
+    const dark = themeConfig.value.theme === 'dark' || (themeConfig.value.theme === 'auto' && prefersDark.value);
+    return [javascript(), ...(dark ? [oneDark] : [])];
+});
+
+const open = ref(false);
+const jsonObj = ref({
+    mcpServers: {},
+});
+const prettyJson = ref('');
+const handleClose = () => {
+    open.value = false;
+};
+
+const acceptParams = (mcpServer: AI.McpServer) => {
+    jsonObj.value.mcpServers = {};
+    const path = mcpServer.outputTransport === 'sse' ? mcpServer.ssePath : mcpServer.streamableHttpPath;
+    jsonObj.value.mcpServers[mcpServer.name] = {
+        url: mcpServer.baseUrl + path,
+    };
+    prettyJson.value = JSON.stringify(jsonObj.value, null, 2);
+    open.value = true;
+};
+
+defineExpose({
+    acceptParams,
+});
+</script>
+
+<style scoped>
+html.dark .mcp-server-config {
+    border-color: var(--el-border-color);
+}
+</style>

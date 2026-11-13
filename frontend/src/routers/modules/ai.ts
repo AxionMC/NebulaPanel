@@ -1,0 +1,111 @@
+﻿import { Layout } from '@/routers/constant';
+import { GlobalStore } from '@/store';
+
+const aiRouter = {
+    sort: 3,
+    path: '/ai',
+    name: 'AI-Menu',
+    component: Layout,
+    redirect: '/ai/model-services',
+    meta: {
+        icon: 'p-jiqiren2',
+        title: 'menu.aiTools',
+    },
+    children: [
+        {
+            path: '/ai/gpu/groups',
+            name: 'GPUGroups',
+            component: () => import('@/views/ai/gpu/groups/index.vue'),
+            hidden: true,
+            meta: { title: 'website.groupSetting', activeMenu: '/ai/gpu/current', permission: 'ai_gpu_view' },
+        },
+        {
+            path: '/ai/gpu/current',
+            name: 'GPU',
+            component: () => import('@/views/ai/gpu/current/index.vue'),
+            meta: {
+                icon: 'p-gpu-menu',
+                title: 'aiTools.gpu.gpu',
+                activeMenu: '/ai/gpu/current',
+                permission: 'ai_gpu_view',
+            },
+        },
+        {
+            path: '/ai/ollama',
+            name: 'OllamaModels',
+            component: () => import('@/views/ai/ollama/index.vue'),
+            meta: {
+                icon: 'p-moxing-menu',
+                title: 'aiTools.model.ollamaManagement',
+                permission: 'ai_model_view',
+            },
+        },
+        {
+            path: '/ai/model-services',
+            name: 'ModelServices',
+            component: () => import('@/views/ai/model/index.vue'),
+            meta: {
+                icon: 'p-moxing-menu',
+                title: 'aiTools.model.services',
+                activeMenu: '/ai/model-services',
+                permission: 'ai_model_view',
+            },
+        },
+        {
+            path: '/ai/agents/agent',
+            name: 'Agents',
+            component: () => import('@/views/ai/agents/agent/index.vue'),
+            meta: {
+                icon: 'p-jiqiren2',
+                title: 'aiTools.agents.agent',
+                permission: 'ai_agent_view',
+            },
+        },
+        {
+            path: '/ai/mcp',
+            name: 'MCPServer',
+            redirect: () => (GlobalStore().hasPermission('mcp_access_view') ? '/ai/mcp/NebulaPanel' : '/ai/mcp/server'),
+            meta: {
+                icon: 'p-mcp-menu',
+                title: 'menu.mcp',
+                permission: ['ai_mcp_view', 'mcp_access_view'],
+            },
+        },
+        {
+            path: '/ai/mcp/server',
+            name: 'MCPServerList',
+            hidden: true,
+            component: () => import('@/views/ai/mcp/server/index.vue'),
+            meta: {
+                title: 'panelMCP.servicesTitle',
+                activeMenu: '/ai/mcp',
+                permission: 'ai_mcp_view',
+            },
+        },
+        {
+            path: '/ai/mcp/NebulaPanel',
+            name: 'PanelMCP',
+            hidden: true,
+            component: () => import('@/views/ai/mcp/panel/index.vue'),
+            meta: {
+                title: 'panelMCP.accessTitle',
+                activeMenu: '/ai/mcp',
+                permission: 'mcp_access_view',
+            },
+        },
+        {
+            path: '/ai/gpu/history',
+            name: 'GPUHistory',
+            component: () => import('@/views/ai/gpu/history/index.vue'),
+            hidden: true,
+            meta: {
+                title: 'aiTools.gpu.history',
+                activeMenu: '/ai/gpu/current',
+                permission: 'ai_gpu_view',
+            },
+        },
+    ],
+};
+
+export default aiRouter;
+

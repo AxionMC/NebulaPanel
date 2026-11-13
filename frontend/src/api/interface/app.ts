@@ -1,0 +1,396 @@
+import { AI } from './ai';
+import { ReqPage, CommonModel } from '.';
+
+export namespace App {
+    export interface LocalAppSyncConfig {
+        enabled: boolean;
+    }
+    export interface App extends CommonModel {
+        name: string;
+        icon?: string;
+        key: string;
+        tags: Tag[];
+        shortDescZh: string;
+        shortDescEn: string;
+        description: string;
+        author: string;
+        source: string;
+        type: string;
+        status: string;
+        limit: number;
+        website?: string;
+        github?: string;
+        readme: string;
+        batchInstallSupport: boolean;
+    }
+
+    interface Locale {
+        zh: string;
+        en: string;
+        'zh-Hant': string;
+        ja: string;
+        ms: string;
+        'pt-br': string;
+        ru: string;
+        ko: string;
+        tr: string;
+        'es-es': string;
+        fa: string;
+        lo: string;
+    }
+
+    export interface AppDTO extends App {
+        versions: string[];
+        installed: boolean;
+        architectures: string;
+    }
+
+    export interface Tag {
+        key: string;
+        name: string;
+        sort: number;
+    }
+
+    export interface AppItem {
+        name: string;
+        icon?: string;
+        key: string;
+        id: number;
+        description: string;
+        status: string;
+        installed: boolean;
+        limit: number;
+        tags: string[];
+        gpuSupport: boolean;
+        recommend: number;
+        batchInstallSupport: boolean;
+    }
+
+    export interface AppResPage {
+        total: number;
+        items: AppItem[];
+    }
+
+    export interface AppUpdateRes {
+        version: string;
+        canUpdate: boolean;
+    }
+
+    export interface AppDetail extends CommonModel {
+        appId: number;
+        icon: string;
+        version: string;
+        readme: string;
+        params: AppParams;
+        dockerCompose: string;
+        image: string;
+        hostMode?: boolean;
+        memoryRequired: number;
+        architectures: string;
+        gpuSupport: boolean;
+    }
+
+    export interface AppReq extends ReqPage {
+        name?: string;
+        tags?: string[];
+        type?: string;
+        recommend?: boolean;
+        resource?: string;
+        showCurrentArch?: boolean;
+    }
+
+    export interface AppParams {
+        formFields: FromField[];
+    }
+
+    export interface FromField {
+        type: string;
+        labelZh: string;
+        labelEn: string;
+        required: boolean;
+        default: any;
+        envKey: string;
+        key?: string;
+        values?: ServiceParam[];
+        child?: FromFieldChild;
+        params?: FromParam[];
+        multiple?: boolean;
+        allowCreate?: boolean;
+        label: Locale;
+        description: Locale;
+    }
+
+    export interface FromFieldChild extends FromField {
+        services: App.AppService[];
+    }
+
+    export interface FromParam {
+        type: string;
+        key: string;
+        value: string;
+        envKey: string;
+    }
+
+    export interface ServiceParam {
+        label: '';
+        value: '';
+        from?: '';
+    }
+
+    export interface AppInstall {
+        gpu?: AI.ModelGPUConfig;
+        syncModelAccount?: boolean;
+        modelAccountBaseURLType?: string;
+        modelAccountBaseURL?: string;
+        appDetailId: number;
+        params: any;
+        taskID: string;
+        name: string;
+    }
+
+    export interface AppInstallSearch extends ReqPage {
+        name?: string;
+        tags?: string[];
+        update?: boolean;
+        unused?: boolean;
+        sync?: boolean;
+    }
+    export interface ChangePort {
+        key: string;
+        name: string;
+        port: number;
+    }
+
+    export interface AppInstalled extends CommonModel {
+        name: string;
+        appID: number;
+        appDetailId: string;
+        env: string;
+        status: string;
+        description: string;
+        message: string;
+        icon: string;
+        canUpdate: boolean;
+        path: string;
+        httpPort?: number;
+        httpsPort?: number;
+        favorite: boolean;
+        app: App;
+        webUI: string;
+        appKey?: string;
+        serviceName: string;
+        appStatus?: string;
+        appType?: string;
+        version?: string;
+    }
+
+    export interface AppInstalledInfo {
+        id: number;
+        name: string;
+        version: string;
+        status: string;
+        message: string;
+        httpPort: number;
+        container: string;
+        env: { [key: string]: any };
+        appKey: string;
+    }
+
+    export interface AppInstallDto {
+        taskID?: string;
+        id: number;
+        name: string;
+        appID: number;
+        appDetailID: number;
+        version: string;
+        status: string;
+        message: string;
+        httpPort: number;
+        httpsPort: number;
+        path: string;
+        canUpdate: boolean;
+        icon: string;
+        appName: string;
+        ready: number;
+        total: number;
+        appKey: string;
+        appType: string;
+        appStatus: string;
+        isEdit: boolean;
+        dockerCompose: string;
+        app: App.AppDetail;
+        linkDB: boolean;
+        resourceKeys?: string[];
+        env?: { [key: string]: any };
+    }
+
+    export interface AppInstalledOption {
+        id: number;
+        key: string;
+        name: string;
+    }
+
+    export interface CheckInstalled {
+        taskID?: string;
+        name: string;
+        version: string;
+        isExist: boolean;
+        modelAccountBaseURLType: string;
+        modelAccountBaseURL: string;
+        app: string;
+        status: string;
+        createdAt: string;
+        lastBackupAt: string;
+        appInstallId: number;
+        containerName: string;
+        installPath: string;
+        httpPort: number;
+        httpsPort: number;
+        websiteDir: string;
+    }
+
+    export interface DatabaseConnInfo {
+        status: string;
+        username: string;
+        password: string;
+        privilege: boolean;
+        containerName: string;
+        serviceName: string;
+        systemIP: string;
+        port: number;
+    }
+    export interface AppInstallResource {
+        type: string;
+        name: string;
+    }
+
+    export interface AppInstalledOp {
+        feishuTransition?: AI.AgentFeishuTransition;
+        installId: number;
+        operate: string;
+        backupId?: number;
+        detailId?: number;
+        forceDelete?: boolean;
+        deleteBackup?: boolean;
+        deleteImage?: boolean;
+        taskID?: string;
+    }
+
+    export interface AppInstalledSearch extends ReqPage {
+        type: string;
+        unused?: boolean;
+        all?: boolean;
+    }
+
+    export interface AppService {
+        label: string;
+        value: string;
+        config?: object;
+        from?: string;
+        status: string;
+    }
+
+    export interface VersionDetail {
+        feishuLegacy?: boolean;
+        feishuConfigured?: boolean;
+        version: string;
+        detailId: number;
+        dockerCompose?: string;
+    }
+
+    export interface InstallParams {
+        labelZh: string;
+        labelEn: string;
+        value: any;
+        edit: boolean;
+        key: string;
+        rule: string;
+        type: string;
+        values?: any;
+        showValue?: string;
+        required?: boolean;
+        multiple?: boolean;
+        label: Locale;
+        showPassword: boolean;
+    }
+
+    export interface AppConfig {
+        gpu?: AI.ModelGPUConfig;
+        appKey: string;
+        name: string;
+        httpPort: number;
+        syncModelAccount: boolean;
+        modelAccountBaseURLType: string;
+        modelAccountBaseURL: string;
+        params: InstallParams[];
+        rawCompose?: string;
+        isEdit?: boolean;
+        cpuQuota: number;
+        memoryLimit: number;
+        memoryUnit: string;
+        containerName: string;
+        allowPort: boolean;
+        dockerCompose: string;
+        hostMode?: boolean;
+        type: string;
+        webUI: string;
+        specifyIP: string;
+        restartPolicy: string;
+    }
+
+    export interface IgnoredApp {
+        name: string;
+        detailID: number;
+        version: string;
+        scope: string;
+    }
+
+    export interface AppUpdateVersionReq {
+        appInstallID: number;
+        updateVersion?: string;
+        loadCompose?: boolean;
+    }
+
+    export interface AppIgnoreReq {
+        appID: number;
+        appDetailID: number;
+        scope: string;
+    }
+
+    export interface CancelAppIgnore {
+        id: number;
+    }
+
+    export interface AppStoreSync {
+        taskID: string;
+    }
+
+    export interface AppConfigUpdate {
+        installID: number;
+        webUI: string;
+    }
+
+    export interface AppStoreConfig {
+        uninstallDeleteImage: string;
+        uninstallDeleteBackup: string;
+        upgradeBackup: string;
+        upgradeDeleteImage: string;
+        installAllowPort: string;
+    }
+
+    export interface AppStoreConfigUpdate {
+        scope: string;
+        status: string;
+    }
+
+    export interface CustomAppStoreConfig {
+        status: string;
+        imagePrefix: string;
+    }
+
+    export interface InstallAppToNodes extends AppInstall {
+        nodes: string[];
+        appKey: string;
+        version: string;
+    }
+}

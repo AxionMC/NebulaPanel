@@ -1,0 +1,129 @@
+package xpu
+
+import "encoding/json"
+
+type memorySizeString string
+
+func (s *memorySizeString) UnmarshalJSON(data []byte) error {
+	var value string
+	if err := json.Unmarshal(data, &value); err == nil {
+		*s = memorySizeString(value)
+		return nil
+	}
+	var number json.Number
+	if err := json.Unmarshal(data, &number); err != nil {
+		return err
+	}
+	*s = memorySizeString(number.String())
+	return nil
+}
+
+type DeviceUtilByProc struct {
+	DeviceID      int     `json:"device_id"`
+	MemSize       float64 `json:"mem_size"`
+	ProcessID     int     `json:"process_id"`
+	ProcessName   string  `json:"process_name"`
+	SharedMemSize float64 `json:"shared_mem_size"`
+}
+
+type DeviceUtilByProcList struct {
+	DeviceUtilByProcList []DeviceUtilByProc `json:"device_util_by_proc_list"`
+}
+
+type discoveryDevice struct {
+	DeviceFunctionType string `json:"device_function_type"`
+	DeviceID           int    `json:"device_id"`
+	DeviceName         string `json:"device_name"`
+	DeviceType         string `json:"device_type"`
+	DrmDevice          string `json:"drm_device"`
+	PciBdfAddress      string `json:"pci_bdf_address"`
+	PciDeviceID        string `json:"pci_device_id"`
+	UUID               string `json:"uuid"`
+	VendorName         string `json:"vendor_name"`
+
+	MemoryPhysicalSizeByte memorySizeString `json:"memory_physical_size_byte"`
+	MemoryFreeSizeByte     memorySizeString `json:"memory_free_size_byte"`
+	DriverVersion          string           `json:"driver_version"`
+}
+
+type discoveryInfo struct {
+	DeviceList []discoveryDevice `json:"device_list"`
+}
+
+type DeviceLevelMetric struct {
+	MetricsType string   `json:"metrics_type"`
+	Value       *float64 `json:"value"`
+}
+
+type TileMetrics struct {
+	TileID   int                 `json:"tile_id"`
+	DataList []DeviceLevelMetric `json:"data_list"`
+}
+
+type TileStats struct {
+	TileID int   `json:"tileID"`
+	Stats  Stats `json:"stats"`
+}
+
+type DeviceStats struct {
+	TileLevel   []TileMetrics       `json:"tile_level"`
+	DeviceID    int                 `json:"device_id"`
+	DeviceLevel []DeviceLevelMetric `json:"device_level"`
+}
+
+type Info struct {
+	Warnings []string `json:"warnings"`
+
+	Type          string `json:"type"`
+	DriverVersion string `json:"driverVersion"`
+
+	Devices []Device `json:"xpu"`
+}
+
+type Device struct {
+	Warnings      []string    `json:"warnings,omitempty"`
+	ReadError     string      `json:"-"`
+	Tiles         []TileStats `json:"tiles"`
+	ProcessStatus string      `json:"processStatus"`
+
+	Basic     Basic     `json:"basic"`
+	Stats     Stats     `json:"stats"`
+	Processes []Process `json:"processes"`
+}
+
+type Basic struct {
+	DrmDevice string `json:"-"`
+	UUID      string `json:"uuid"`
+
+	DeviceID      int    `json:"deviceID"`
+	DeviceName    string `json:"deviceName"`
+	VendorName    string `json:"vendorName"`
+	DriverVersion string `json:"driverVersion"`
+	Memory        string `json:"memory"`
+	FreeMemory    string `json:"freeMemory"`
+	PciBdfAddress string `json:"pciBdfAddress"`
+}
+
+type Stats struct {
+	MediaUtil         string `json:"mediaUtil"`
+	ComputeUtil       string `json:"computeUtil"`
+	CopyUtil          string `json:"copyUtil"`
+	MediaFrequency    string `json:"mediaFrequency"`
+	MemoryTemperature string `json:"memoryTemperature"`
+
+	MemoryBandwidthUtil string `json:"memoryBandwidthUtil"`
+
+	Power       string `json:"power"`
+	GPUUtil     string `json:"gpuUtil"`
+	Frequency   string `json:"frequency"`
+	Temperature string `json:"temperature"`
+	MemoryUsed  string `json:"memoryUsed"`
+	MemoryUtil  string `json:"memoryUtil"`
+}
+
+type Process struct {
+	PID     int    `json:"pid"`
+	Command string `json:"command"`
+	SHR     string `json:"shr"`
+	Memory  string `json:"memory"`
+}

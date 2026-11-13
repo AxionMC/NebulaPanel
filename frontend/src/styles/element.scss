@@ -1,0 +1,250 @@
+/*==========================================================
+  NebulaPanel 星云紫主题 - 彻底脱离 1Panel 蓝色风格
+  主色：#7B2CBF（星云紫） / #5A189A（深紫）
+============================================================*/
+:root {
+    --panel-gradient-end-color: var(--el-color-primary-light-7);
+
+    --el-color-primary-light-1: #2E0A57;
+    --el-color-primary-light-2: #4B1A8C;
+    --el-color-primary-light-4: #7B2CBF;
+    --el-color-primary-light-6: #B488DF;
+    --el-color-primary-light-8: #D9BDEE;
+
+    --panel-color-primary: #7B2CBF;
+    --panel-color-primary-light-8: #D9BDEE;
+    --panel-color-primary-light-1: #2E0A57;
+    --panel-color-primary-light-2: #4B1A8C;
+    --panel-color-primary-light-3: #9A4FD6;
+    --panel-color-primary-light-4: #7B2CBF;
+    --panel-color-primary-light-5: #9A6BD2;
+    --panel-color-primary-light-6: #B488DF;
+    --panel-color-primary-light-7: #D4B8EC;
+    --panel-color-primary-light-9: #F3EDFA;
+
+    --el-color-primary: var(--panel-color-primary);
+    --el-color-primary-light-3: var(--panel-color-primary-light-1);
+    --el-color-primary-light-5: var(--panel-color-primary-light-5);
+    --el-color-primary-light-7: var(--panel-color-primary-light-7);
+    --el-color-primary-light-8: var(--panel-color-primary-light-8);
+    --el-color-primary-light-9: var(--panel-color-primary-light-9);
+    --panel-code-header-footer-color: var(--panel-color-primary-light-9);
+
+    --el-text-color-regular: #5B536B;
+}
+
+html {
+    --el-box-shadow-light: 0px 0px 8px rgba(123, 44, 191, 0.15) !important;
+
+    // * menu - 星云紫风格
+    --el-menu-item-bg-color: rgba(255, 255, 255, 0.4);
+    --el-menu-item-bg-color-active: #FFFFFF;
+    --panel-main-bg-color-9: #F3EDFA;
+    --panel-menu-bg-color: rgba(123, 44, 191, 0.08);
+    --panel-menu-width: 200px;
+    --panel-menu-hide-width: 72px;
+    --panel-text-color: #1E1B2B;
+    --panel-border: 1px solid #E2D7F3;
+    --panel-button-active: #FFFFFF;
+    --panel-button-text-color: var(--panel-color-primary);
+    --panel-button-bg-color: #FFFFFF;
+    --panel-footer-border: #E2D7F3;
+    --panel-terminal-tag-bg-color: #E2D7F3;
+    --panel-terminal-tag-active-bg-color: #7B2CBF;
+    --panel-terminal-tag-active-text-color: #FFFFFF;
+    --panel-terminal-tag-hover-text-color: #5A189A;
+    --panel-terminal-bg-color: #1A1826;
+    --panel-logs-bg-color: #1A1826;
+    --panel-alert-bg-color: rgba(123, 44, 191, 0.06);
+
+    --panel-alert-bg: #F3EDFA;
+    --panel-path-bg: #FFFFFF;
+    --panel-footer-bg: #FFFFFF;
+    --panel-pie-bg-color: #FFFFFF;
+
+    --el-fill-color-light: #FFFFFF;
+    --el-disabled-bg-color: var(--panel-main-bg-color-9) !important;
+
+    --panel-node-card-bg-color: #E2D7F3;
+
+    // 全局背景色改为星云浅紫
+    --el-bg-color-page: #F9F7FF;
+    --el-bg-color-body: #F4F0FB;
+}
+
+html.dark {
+    --el-box-shadow-light: 0px 0px 8px rgba(123, 44, 191, 0.25) !important;
+
+    --el-menu-item-bg-color: rgba(26, 24, 38, 0.6);
+    --el-menu-item-bg-color-active: #1A1826;
+    --panel-main-bg-color-9: #1A1826;
+    --panel-menu-bg-color: rgba(123, 44, 191, 0.15);
+    --panel-text-color: #E8E2F4;
+    --panel-border: 1px solid #2E2A40;
+    --panel-button-active: #1A1826;
+    --panel-button-text-color: var(--panel-color-primary-light-6);
+    --panel-button-bg-color: #1A1826;
+    --panel-footer-border: #2E2A40;
+    --panel-terminal-tag-bg-color: #2E2A40;
+    --panel-terminal-tag-active-bg-color: #B488DF;
+    --panel-terminal-tag-active-text-color: #1E1B2B;
+    --panel-terminal-tag-hover-text-color: #D9BDEE;
+    --panel-terminal-bg-color: #0F0E16;
+    --panel-logs-bg-color: #0F0E16;
+    --panel-alert-bg-color: rgba(123, 44, 191, 0.12);
+
+    --panel-alert-bg: #1A1826;
+    --panel-path-bg: #1A1826;
+    --panel-footer-bg: #1A1826;
+    --panel-pie-bg-color: #1A1826;
+
+    --el-fill-color-light: #1A1826;
+    --el-disabled-bg-color: var(--panel-main-bg-color-9) !important;
+
+    --panel-node-card-bg-color: #2E2A40;
+
+    --el-bg-color-page: #0F0E16;
+    --el-bg-color-body: #12101D;
+}
+
+.el-notification {
+    z-index: 99999 !important;
+}
+
+.el-message {
+    z-index: 99999 !important;
+}
+
+.table-box {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .table-search {
+        display: flex;
+        margin-bottom: 10px;
+        .el-form {
+            max-width: 1260px;
+            .el-form-item {
+                margin-right: 5px;
+                .el-input,
+                .el-select,
+                .el-date-editor--timerange {
+                    width: 210px;
+                }
+                .el-date-editor--datetimerange,
+                .el-date-editor--daterange {
+                    width: 400px;
+                }
+
+                .el-range-editor.el-input__wrapper {
+                    padding: 0 10px;
+                }
+
+                .el-select__tags {
+                    overflow: hidden;
+                    white-space: nowrap;
+                }
+            }
+            .more-item {
+                display: inline;
+            }
+        }
+        .search-operation {
+            margin-left: 15px;
+            white-space: nowrap;
+            .search-isOpen {
+                margin-left: 20px;
+            }
+        }
+    }
+}
+
+/* 按钮主题 - 紫色渐变 */
+.el-button--primary {
+    background: linear-gradient(135deg, #7B2CBF 0%, #5A189A 100%) !important;
+    border-color: #7B2CBF !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 12px rgba(123, 44, 191, 0.35) !important;
+}
+
+.el-button--primary:hover {
+    background: linear-gradient(135deg, #5A189A 0%, #7B2CBF 100%) !important;
+    border-color: #5A189A !important;
+    box-shadow: 0 6px 16px rgba(123, 44, 191, 0.45) !important;
+    color: #FFFFFF !important;
+}
+
+.el-button--primary:focus,
+.el-button--primary:active {
+    border-color: #5A189A !important;
+    color: #FFFFFF !important;
+}
+
+/* 次级按钮 */
+.el-button--success {
+    background-color: #10B981 !important;
+    border-color: #10B981 !important;
+    color: #FFFFFF !important;
+}
+
+.el-button--warning {
+    background-color: #F59E0B !important;
+    border-color: #F59E0B !important;
+    color: #FFFFFF !important;
+}
+
+.el-button--danger {
+    background-color: #EF4444 !important;
+    border-color: #EF4444 !important;
+    color: #FFFFFF !important;
+}
+
+/* 输入框焦点紫色 */
+.el-input__inner:focus,
+.el-select__wrapper:focus,
+.el-date-editor__input:focus {
+    border-color: #7B2CBF !important;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(123, 44, 191, 0.15) !important;
+}
+
+/* 切换开关激活色 */
+.el-switch--small.is-checked .el-switch__core,
+.el-switch.is-checked .el-switch__core {
+    border-color: #7B2CBF !important;
+    background-color: #7B2CBF !important;
+}
+
+/* 菜单项悬停和激活 */
+.el-menu-item:hover,
+.el-sub-menu__title:hover {
+    color: #7B2CBF !important;
+}
+
+.el-menu-item.is-active {
+    background-color: #FFFFFF !important;
+    box-shadow: 0px 0px 8px rgba(123, 44, 191, 0.18), inset 0 0 0 3px #7B2CBF !important;
+}
+
+/* 卡片悬停紫边 */
+.el-card:hover {
+    border-color: #7B2CBF !important;
+    box-shadow: 0 6px 20px rgba(123, 44, 191, 0.12) !important;
+}
+
+/* 标签页 */
+.el-tabs__active-btn {
+    color: #7B2CBF !important;
+}
+
+/* 全局背景 */
+html {
+    background-color: var(--el-bg-color-body);
+}
+
+body {
+    background-color: var(--el-bg-color-body);
+    color: var(--text-color-regular);
+    font-family: var(--font-family) !important;
+}

@@ -1,0 +1,245 @@
+﻿﻿package server
+
+import (
+	"bufio"
+	"context"
+	"crypto/tls"
+	"encoding/gob"
+	"fmt"
+	"net"
+	"net/http"
+	"os"
+	"path"
+	"runtime"
+	"strings"
+	"time"
+
+	"github.com/NebulaPanel/nebulapanel/core/app/service"
+	"github.com/NebulaPanel/nebulapanel/core/init/auth"
+	"github.com/NebulaPanel/nebulapanel/core/init/db"
+	"github.com/NebulaPanel/nebulapanel/core/init/geo"
+	"github.com/NebulaPanel/nebulapanel/core/init/log"
+	"github.com/NebulaPanel/nebulapanel/core/init/migration"
+	"github.com/NebulaPanel/nebulapanel/core/init/proxy"
+	"github.com/gin-gonic/gin"
+	"github.com/soheilhy/cmux"
+
+	"github.com/NebulaPanel/nebulapanel/core/constant"
+	"github.com/NebulaPanel/nebulapanel/core/global"
+	"github.com/NebulaPanel/nebulapanel/core/i18n"
+	"github.com/NebulaPanel/nebulapanel/core/init/cron"
+	"github.com/NebulaPanel/nebulapanel/core/init/hook"
+	"github.com/NebulaPanel/nebulapanel/core/init/router"
+	"github.com/NebulaPanel/nebulapanel/core/init/session"
+	"github.com/NebulaPanel/nebulapanel/core/init/session/psession"
+	"github.com/NebulaPanel/nebulapanel/core/init/validator"
+	"github.com/NebulaPanel/nebulapanel/core/init/viper"
+	"github.com/NebulaPanel/nebulapanel/core/utils/re"
+)
+
+func Start() {
+	processStartedAt := time.Now()
+	re.Init()
+	viper.Init()
+	log.Init()
+	db.Init()
+	migration.Init()
+	i18n.Init()
+	validator.Init()
+	geo.Init()
+	gob.Register(psession.SessionUser{})
+	cron.Init()
+	session.Init()
+	InitOthersBeforeHook()
+	hook.Init()
+	InitOthersAfterHook()
+	service.SyncScriptLibraryOnStartup()
+
+	proxy.Init()
+	service.CloseTerminalSessions("all", "", "")
+
+	rootRouter := router.Routers()
+
+	if global.CONF.Base.Mode != "stable" {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	global.IPTracker = auth.NewIPTracker()
+
+	tcpItem := "tcp4"
+	if global.CONF.Conn.Ipv6 == constant.StatusEnable {
+		tcpItem = "tcp"
+		global.CONF.Conn.BindAddress = fmt.Sprintf("[%s]", global.CONF.Conn.BindAddress)
+	}
+	server := &http.Server{
+		Addr:              global.CONF.Conn.BindAddress + ":" + global.CONF.Conn.Port,
+		Handler:           rootRouter,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       600 * time.Second,
+		WriteTimeout:      600 * time.Second,
+		IdleTimeout:       240 * time.Second,
+	}
+	ln, err := net.Listen(tcpItem, server.Addr)
+	if err != nil {
+		panic(err)
+	}
+	if err := service.NewMCPService().RecoverInterruptedInvocations(processStartedAt); err != nil {
+		global.LOG.Errorf("MCP invocation audit recovery failed; runtime bridge is unavailable: %v", err)
+	} else if err := router.StartMCPBridge(); err != nil {
+		global.LOG.Errorf("MCP runtime bridge is unavailable: %v", err)
+	}
+	if err := service.NewMCPRuntimeService().RecoverInstallationTasks(processStartedAt); err != nil {
+		global.LOG.Errorf("MCP installation task recovery failed: %v", err)
+	}
+	if runtime.GOOS == "linux" {
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			if err := service.NewMCPRuntimeService().PrepareOnStartup(ctx); err != nil {
+				global.LOG.Warnf("MCP Docker runtime preparation failed: %v", err)
+			}
+			websiteCtx, websiteCancel := context.WithTimeout(context.Background(), 20*time.Second)
+			defer websiteCancel()
+			if err := service.NewMCPRuntimeService().SyncWebsite(websiteCtx); err != nil {
+				global.LOG.Warnf("MCP website proxy synchronization failed: %v", err)
+			}
+		}()
+	}
+	type tcpKeepAliveListener struct {
+		*net.TCPListener
+	}
+	switch global.CONF.Conn.SSL {
+	case constant.StatusEnable:
+		constant.CertStore.Store(loadCert())
+
+		server.TLSConfig = &tls.Config{
+			GetCertificate: func(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
+				return constant.CertStore.Load().(*tls.Certificate), nil
+			},
+		}
+		global.LOG.Infof("listen at https://%s:%s [%s]", global.CONF.Conn.BindAddress, global.CONF.Conn.Port, tcpItem)
+
+		if err := server.ServeTLS(tcpKeepAliveListener{ln.(*net.TCPListener)}, "", ""); err != nil {
+			panic(err)
+		}
+	case constant.StatusMux:
+		constant.CertStore.Store(loadCert())
+
+		server.TLSConfig = &tls.Config{
+			NextProtos: []string{"h2", "http/1.1"},
+			GetCertificate: func(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
+				return constant.CertStore.Load().(*tls.Certificate), nil
+			},
+		}
+
+		m := cmux.New(ln)
+
+		httpsL := m.Match(cmux.TLS())
+		httpL := m.Match(cmux.HTTP1Fast())
+		anyL := m.Match(cmux.Any())
+
+		go func() {
+			if err := server.Serve(tls.NewListener(httpsL, server.TLSConfig)); err != nil {
+				global.LOG.Errorf("HTTPS Serve Error: %v", err)
+			}
+		}()
+
+		go func() {
+			for {
+				conn, err := httpL.Accept()
+				if err != nil {
+					return
+				}
+				go handleMuxHttpConn(conn)
+			}
+		}()
+
+		go func() {
+			for {
+				conn, err := anyL.Accept()
+				if err != nil {
+					return
+				}
+				conn.Close()
+			}
+		}()
+
+		global.LOG.Infof("listen at mux (http/https)://%s:%s [%s]", global.CONF.Conn.BindAddress, global.CONF.Conn.Port, tcpItem)
+
+		if err := m.Serve(); err != nil {
+			panic(err)
+		}
+	default:
+		global.LOG.Infof("listen at http://%s:%s [%s]", global.CONF.Conn.BindAddress, global.CONF.Conn.Port, tcpItem)
+		if err := server.Serve(tcpKeepAliveListener{ln.(*net.TCPListener)}); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func loadCert() *tls.Certificate {
+	certPath := path.Join(global.CONF.Base.InstallDir, "NebulaPanel/secret/server.crt")
+	keyPath := path.Join(global.CONF.Base.InstallDir, "NebulaPanel/secret/server.key")
+	certificate, err := os.ReadFile(certPath)
+	if err != nil {
+		panic(err)
+	}
+	key, err := os.ReadFile(keyPath)
+	if err != nil {
+		panic(err)
+	}
+	cert, err := tls.X509KeyPair(certificate, key)
+	if err != nil {
+		panic(err)
+	}
+	return &cert
+}
+
+func handleMuxHttpConn(conn net.Conn) {
+	defer conn.Close()
+
+	req, err := http.ReadRequest(bufio.NewReader(conn))
+	if err != nil {
+		return
+	}
+
+	if req.Host == "" {
+		return
+	}
+
+	ua := req.Header.Get("User-Agent")
+	if ua == "" {
+		return
+	}
+
+	switch req.Method {
+	case http.MethodGet, http.MethodHead, http.MethodPost:
+	default:
+		return
+	}
+
+	if len(req.RequestURI) > 4096 {
+		return
+	}
+
+	if !strings.HasPrefix(req.URL.Path, "/") {
+		return
+	}
+
+	target := "https://" + req.Host + req.URL.RequestURI()
+
+	resp := &http.Response{
+		StatusCode: http.StatusTemporaryRedirect,
+		Proto:      "HTTP/1.1",
+		ProtoMajor: 1,
+		ProtoMinor: 1,
+		Header:     make(http.Header),
+	}
+	resp.Header.Set("Location", target)
+	resp.Header.Set("Connection", "close")
+
+	_ = resp.Write(conn)
+}
+

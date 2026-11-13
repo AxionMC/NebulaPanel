@@ -1,0 +1,1058 @@
+﻿﻿package service
+
+import (
+	"encoding/json"
+	"fmt"
+	"mime"
+	"strconv"
+	"strings"
+
+	"github.com/NebulaPanel/nebulapanel/agent/app/dto"
+	"github.com/NebulaPanel/nebulapanel/agent/app/model"
+	"github.com/NebulaPanel/nebulapanel/agent/app/repo"
+	"github.com/NebulaPanel/nebulapanel/agent/buserr"
+	"github.com/NebulaPanel/nebulapanel/agent/constant"
+	"github.com/NebulaPanel/nebulapanel/agent/global"
+	"github.com/NebulaPanel/nebulapanel/agent/i18n"
+	alertUtil "github.com/NebulaPanel/nebulapanel/agent/utils/alert"
+	alertconfig "github.com/NebulaPanel/nebulapanel/agent/utils/alert_config"
+	alertwebhook "github.com/NebulaPanel/nebulapanel/agent/utils/alert_webhook"
+	"github.com/NebulaPanel/nebulapanel/agent/utils/copier"
+	"github.com/NebulaPanel/nebulapanel/agent/utils/email"
+	"github.com/NebulaPanel/nebulapanel/agent/utils/xpack"
+	"github.com/NebulaPanel/nebulapanel/agent/utils/xpack/providers"
+)
+
+type AlertService struct{}
+
+var eeHiddenAlertTypes = []string{"licenseException", "panelUpdate", "panelPwdEndTime"}
+var communityAlertMethodTypeNames = map[string]string{
+	constant.WeCom:    "WeCom",
+	constant.DingTalk: "DingTalk",
+	constant.FeiShu:   "FeiShu",
+	constant.SMS:      "SMS",
+}
+
+var legacyAlertMethodTypeMap = map[string]string{
+	"mail":            constant.Email,
+	constant.Email:    constant.Email,
+	constant.SMS:      constant.SMS,
+	constant.Bark:     constant.Bark,
+	constant.WeChat:   constant.WeCom,
+	constant.WeCom:    constant.WeCom,
+	constant.DingTalk: constant.DingTalk,
+	constant.FeiShu:   constant.FeiShu,
+	constant.Custom:   constant.Custom,
+}
+
+var supportedAlertMethodTypes = map[string]struct{}{
+	constant.Email:    {},
+	constant.SMS:      {},
+	constant.Bark:     {},
+	constant.WeCom:    {},
+	constant.DingTalk: {},
+	constant.FeiShu:   {},
+	constant.Custom:   {},
+}
+
+type IAlertService interface {
+	PageAlert(req dto.AlertSearch) (int64, []dto.AlertDTO, error)
+	GetAlerts() ([]dto.AlertDTO, error)
+	CreateAlert(create dto.AlertCreate, operator string) error
+	UpdateAlert(req dto.AlertUpdate, operator string) error
+	DeleteAlert(id uint) error
+	GetAlert(id uint) (dto.AlertDTO, error)
+	UpdateStatus(id uint, status string) error
+	ExternalUpdateAlert(req dto.AlertCreate, operator string) error
+
+	GetDisks() ([]dto.DiskDTO, error)
+	PageAlertLogs(req dto.AlertLogSearch) (int64, []dto.AlertLogDTO, error)
+	CleanAlertLogs() error
+	GetClams() ([]dto.ClamDTO, error)
+	GetCronJobs(req dto.CronJobReq) ([]dto.CronJobDTO, error)
+
+	GetAlertConfig(req dto.AlertConfigQuery) ([]model.AlertConfig, error)
+	PageAlertConfig(req dto.AlertConfigPageReq) (int64, []model.AlertConfig, error)
+	UpdateAlertConfig(req dto.AlertConfigUpdate, operator string) error
+	UpdateAlertConfigStatus(req dto.AlertConfigStatusUpdate, operator string) (string, error)
+	DeleteAlertConfig(id uint) (string, error)
+	TestAlertConfig(req dto.AlertConfigTest) (bool, error)
+	TestCustomAlertConfig(req dto.AlertConfigTest, lang string) (dto.AlertConfigTestResult, error)
+}
+
+func NewIAlertService() IAlertService {
+	return &AlertService{}
+}
+
+func (a AlertService) PageAlert(search dto.AlertSearch) (int64, []dto.AlertDTO, error) {
+	var (
+		opts   []repo.DBOption
+		result []dto.AlertDTO
+	)
+	if global.CONF.Base.IsEnterprise {
+		opts = append(opts, alertRepo.WithByTypeNotIn(eeHiddenAlertTypes))
+	}
+	if search.Status != "" {
+		opts = append(opts, repo.WithByStatus(search.Status))
+	}
+	if search.Type != "" {
+		opts = append(opts, alertRepo.WithByType(search.Type))
+	}
+	opts = append(opts, repo.WithOrderDesc("created_at"))
+
+	total, alerts, err := alertRepo.Page(search.Page, search.PageSize, opts...)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	cronjobProjects := make(map[string]uint)
+	var cronjobIDs []uint
+	for _, item := range alerts {
+		if alertUtil.GetCronJobType(item.Type) != "cronJob" {
+			continue
+		}
+		if _, exists := cronjobProjects[item.Project]; exists {
+			continue
+		}
+		id, parseErr := strconv.ParseUint(item.Project, 10, strconv.IntSize)
+		if parseErr != nil || id == 0 {
+			continue
+		}
+		cronjobProjects[item.Project] = uint(id)
+		cronjobIDs = append(cronjobIDs, uint(id))
+	}
+	cronjobsByID := make(map[uint]model.Cronjob)
+	if len(cronjobIDs) > 0 {
+		cronjobs, err := cronjobRepo.List(repo.WithByIDs(cronjobIDs))
+		if err != nil {
+			return 0, nil, err
+		}
+		for _, cronjob := range cronjobs {
+			cronjobsByID[cronjob.ID] = cronjob
+		}
+	}
+
+	for _, item := range alerts {
+		var taskName string
+		if cronjob, exists := cronjobsByID[cronjobProjects[item.Project]]; exists && cronjob.Type == item.Type {
+			taskName = cronjob.Name
+		}
+
+		result = append(result, dto.AlertDTO{
+			ID:             item.ID,
+			Type:           item.Type,
+			Cycle:          item.Cycle,
+			Count:          item.Count,
+			Method:         item.Method,
+			Title:          item.Title,
+			Project:        item.Project,
+			TaskName:       taskName,
+			Status:         item.Status,
+			SendCount:      item.SendCount,
+			AdvancedParams: item.AdvancedParams,
+			CreateUser:     item.CreateUser,
+			UpdateUser:     item.UpdateUser,
+			CreatedAt:      item.CreatedAt,
+			UpdatedAt:      item.UpdatedAt,
+		})
+	}
+
+	return total, result, err
+}
+
+func (a AlertService) GetAlerts() ([]dto.AlertDTO, error) {
+	var (
+		opts   []repo.DBOption
+		result []dto.AlertDTO
+	)
+	opts = append(opts, repo.WithByStatus(constant.AlertEnable))
+	alerts, err := alertRepo.List(opts...)
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range alerts {
+
+		result = append(result, dto.AlertDTO{
+			ID:             item.ID,
+			Type:           item.Type,
+			Cycle:          item.Cycle,
+			Count:          item.Count,
+			Method:         item.Method,
+			Title:          item.Title,
+			Project:        item.Project,
+			Status:         item.Status,
+			SendCount:      item.SendCount,
+			AdvancedParams: item.AdvancedParams,
+			CreateUser:     item.CreateUser,
+			UpdateUser:     item.UpdateUser,
+			CreatedAt:      item.CreatedAt,
+			UpdatedAt:      item.UpdatedAt,
+		})
+	}
+
+	return result, err
+}
+
+func (a AlertService) CreateAlert(create dto.AlertCreate, operator string) error {
+	if err := a.validateCommunityAlertMethod(create.Method); err != nil {
+		return err
+	}
+	var alertID uint
+	var alertInfo model.Alert
+	if create.Project != "" {
+		alertInfo, _ := alertRepo.Get(alertRepo.WithByType(create.Type), alertRepo.WithByProject(create.Project))
+		alertID = alertInfo.ID
+	} else {
+		alertInfo, _ := alertRepo.Get(alertRepo.WithByType(create.Type))
+		alertID = alertInfo.ID
+	}
+
+	if alertID != 0 {
+		var upAlert dto.AlertUpdate
+		if err := copier.Copy(&upAlert, &create); err != nil {
+			return buserr.WithErr("ErrStructTransform", err)
+		}
+		upAlert.ID = alertID
+		err := a.UpdateAlert(upAlert, operator)
+		if err != nil {
+			return err
+		}
+	} else {
+		advanced, err := prepareCronJobAlertParams(create.Type, "", create.AdvancedParams)
+		if err != nil {
+			return err
+		}
+		create.AdvancedParams = advanced
+		if create.Status != constant.AlertDisable {
+			if err := a.validateCronJobAlertChannels(create.Type, advanced, create.Method); err != nil {
+				return err
+			}
+		}
+		alertInfo.Status = constant.AlertEnable
+		if err := copier.Copy(&alertInfo, &create); err != nil {
+			return buserr.WithErr("ErrStructTransform", err)
+		}
+		alertInfo.CreateUser = operator
+		alertInfo.UpdateUser = operator
+
+		if err := alertRepo.Create(&alertInfo); err != nil {
+			return err
+		}
+		NewIAlertTaskHelper().InitTask(alertInfo.Type)
+	}
+
+	return nil
+}
+
+func (a AlertService) UpdateAlert(req dto.AlertUpdate, operator string) error {
+	if alertUtil.GetCronJobType(req.Type) == "cronJob" {
+		previous, err := alertRepo.Get(repo.WithByID(req.ID))
+		if err != nil {
+			return err
+		}
+		req.AdvancedParams, err = prepareCronJobAlertParams(req.Type, previous.AdvancedParams, req.AdvancedParams)
+		if err != nil {
+			return err
+		}
+	}
+	methodTypes, err := a.validateAlertMethodReferences(req.Method)
+	if err != nil {
+		return err
+	}
+	if req.Status != constant.AlertDisable {
+		if err := a.validateCronJobAlertChannels(req.Type, req.AdvancedParams, req.Method); err != nil {
+			return err
+		}
+		if err := a.validateAlertMethodEntitlement(methodTypes); err != nil {
+			return err
+		}
+	}
+
+	upMap := make(map[string]interface{})
+	upMap["id"] = req.ID
+	upMap["type"] = req.Type
+	upMap["cycle"] = req.Cycle
+	upMap["count"] = req.Count
+	upMap["method"] = req.Method
+	upMap["title"] = req.Title
+	upMap["project"] = req.Project
+	upMap["status"] = req.Status
+	upMap["send_count"] = req.SendCount
+	upMap["advanced_params"] = req.AdvancedParams
+	upMap["update_user"] = operator
+
+	if err := alertRepo.Update(upMap, repo.WithByID(req.ID)); err != nil {
+		return err
+	}
+	NewIAlertTaskHelper().InitTask(req.Type)
+	return nil
+}
+
+func (a AlertService) DeleteAlert(id uint) error {
+	alertInfo, _ := alertRepo.Get(repo.WithByID(id))
+	if alertInfo.ID == 0 {
+		return buserr.New("ErrRecordNotFound")
+	}
+	err := alertRepo.Delete(repo.WithByID(id))
+	if err != nil {
+		return err
+	}
+	alerts, err := a.GetAlerts()
+	if err != nil {
+		return err
+	}
+	if len(alerts) > 0 {
+		NewIAlertTaskHelper().InitTask(alertInfo.Type)
+	} else {
+		NewIAlertTaskHelper().StopTask()
+	}
+	return nil
+}
+
+func (a AlertService) GetAlert(id uint) (dto.AlertDTO, error) {
+	var res dto.AlertDTO
+	alertInfo, err := alertRepo.Get(repo.WithByID(id))
+	if err != nil {
+		return res, err
+	}
+	_ = copier.Copy(&res, &alertInfo)
+	return res, nil
+}
+
+func (a AlertService) UpdateStatus(id uint, status string) error {
+	alertInfo, _ := alertRepo.Get(repo.WithByID(id))
+	if alertInfo.ID == 0 {
+		return buserr.New("ErrRecordNotFound")
+	}
+	methodTypes, err := a.validateAlertMethodReferences(alertInfo.Method)
+	if err != nil {
+		return err
+	}
+	if status == constant.AlertEnable {
+		if err := a.validateCronJobAlertChannels(alertInfo.Type, alertInfo.AdvancedParams, alertInfo.Method); err != nil {
+			return err
+		}
+		if err := a.validateAlertMethodEntitlement(methodTypes); err != nil {
+			return err
+		}
+	}
+	err = alertRepo.Update(map[string]interface{}{"status": status}, repo.WithByID(alertInfo.ID))
+	if err != nil {
+		return err
+	}
+	alerts, err := a.GetAlerts()
+	if err != nil {
+		return err
+	}
+	if len(alerts) > 0 {
+		NewIAlertTaskHelper().InitTask(alertInfo.Type)
+	} else {
+		NewIAlertTaskHelper().StopTask()
+	}
+	return nil
+}
+
+func (a AlertService) GetDisks() ([]dto.DiskDTO, error) {
+	infos := loadDiskInfo(true)
+	disks := make([]dto.DiskDTO, 0, len(infos))
+	for _, item := range infos {
+		disks = append(disks, dto.DiskDTO(item))
+	}
+	return disks, nil
+}
+
+func (a AlertService) PageAlertLogs(search dto.AlertLogSearch) (int64, []dto.AlertLogDTO, error) {
+	var (
+		opts   []repo.DBOption
+		result []dto.AlertLogDTO
+	)
+	if search.Status != "" {
+		opts = append(opts, repo.WithByStatus(search.Status))
+	}
+	if search.Count != 0 {
+		opts = append(opts, alertRepo.WithByCount(search.Count))
+	}
+	if !search.StartTime.IsZero() && !search.EndTime.IsZero() {
+		opts = append(opts, repo.WithByCreatedAt(search.StartTime, search.EndTime))
+	}
+	opts = append(opts, repo.WithOrderDesc("created_at"))
+
+	total, alerts, err := alertRepo.PageLog(search.Page, search.PageSize, opts...)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	for _, item := range alerts {
+		alertLogDTO, err := a.parseAlertLog(item)
+		if err != nil {
+			return 0, nil, err
+		}
+		result = append(result, alertLogDTO)
+	}
+
+	return total, result, err
+}
+
+func (a AlertService) parseAlertLog(item model.AlertLog) (dto.AlertLogDTO, error) {
+	var alertDetail dto.AlertDetail
+	var alertRule dto.AlertRule
+
+	if err := unmarshalAlertInfo(item.AlertDetail, &alertDetail); err != nil {
+		return dto.AlertLogDTO{}, err
+	}
+	alertDetail.Task = nil
+	if err := unmarshalAlertInfo(item.AlertRule, &alertRule); err != nil {
+		return dto.AlertLogDTO{}, err
+	}
+	return dto.AlertLogDTO{
+		ID:          item.ID,
+		Count:       item.Count,
+		Type:        item.Type,
+		Status:      item.Status,
+		Method:      item.Method,
+		Message:     item.Message,
+		AlertId:     item.AlertId,
+		AlertDetail: alertDetail,
+		AlertRule:   alertRule,
+		CreatedAt:   item.CreatedAt,
+		UpdatedAt:   item.UpdatedAt,
+	}, nil
+}
+
+func unmarshalAlertInfo(data string, v interface{}) error {
+	if err := json.Unmarshal([]byte(data), v); err != nil {
+		return fmt.Errorf("unmarshal alert info vars failed, err: %v", err)
+	}
+	return nil
+}
+
+func (a AlertService) CleanAlertLogs() error {
+	return alertRepo.CleanAlertLogs()
+}
+
+func (a AlertService) GetClams() ([]dto.ClamDTO, error) {
+	var clams []dto.ClamDTO
+	clamList, err := clamRepo.List()
+
+	for _, clam := range clamList {
+		var clamDTO dto.ClamDTO
+		clamDTO.ID = clam.ID
+		clamDTO.Name = clam.Name
+		clamDTO.Path = clam.Path
+		clamDTO.Status = clam.Status
+		clamDTO.UpdatedAt = clam.UpdatedAt
+		clamDTO.CreatedAt = clam.CreatedAt
+		clams = append(clams, clamDTO)
+	}
+	return clams, err
+}
+
+func (a AlertService) GetCronJobs(req dto.CronJobReq) ([]dto.CronJobDTO, error) {
+	var cronJobs []dto.CronJobDTO
+	var (
+		opts []repo.DBOption
+	)
+	if req.Status != "" {
+		opts = append(opts, repo.WithByStatus(req.Status))
+	}
+	if req.Type != "" {
+		opts = append(opts, repo.WithByType(req.Type))
+	}
+	cronjobList, err := cronjobRepo.List(opts...)
+
+	for _, cronJob := range cronjobList {
+		var cronJobDTO dto.CronJobDTO
+		cronJobDTO.ID = cronJob.ID
+		cronJobDTO.Name = cronJob.Name
+		cronJobDTO.Status = cronJob.Status
+		cronJobDTO.Type = cronJob.Type
+		cronJobDTO.UpdatedAt = cronJob.UpdatedAt
+		cronJobDTO.CreatedAt = cronJob.CreatedAt
+		cronJobs = append(cronJobs, cronJobDTO)
+	}
+	return cronJobs, err
+}
+
+func (a AlertService) GetAlertConfig(req dto.AlertConfigQuery) ([]model.AlertConfig, error) {
+	var (
+		opts    []repo.DBOption
+		configs []model.AlertConfig
+	)
+	if len(req.ExcludeTypes) > 0 {
+		opts = append(opts, alertRepo.WithByTypeNotIn(req.ExcludeTypes))
+	}
+	opts = append(opts, repo.WithByStatus(constant.AlertEnable))
+	configs, err := alertRepo.AlertConfigList(opts...)
+	if err != nil {
+		return nil, err
+	}
+	if err := exposeCustomAlertConfigSecrets(configs); err != nil {
+		return nil, err
+	}
+	return configs, nil
+}
+
+func (a AlertService) PageAlertConfig(req dto.AlertConfigPageReq) (int64, []model.AlertConfig, error) {
+	opts := []repo.DBOption{
+		alertRepo.WithByTypeNotIn([]string{"common"}),
+		repo.WithOrderDesc("created_at"),
+	}
+	if len(req.ExcludeTypes) > 0 {
+		opts = append(opts, alertRepo.WithByTypeNotIn(req.ExcludeTypes))
+	}
+	total, configs, err := alertRepo.PageAlertConfig(req.Page, req.PageSize, opts...)
+	if err != nil {
+		return 0, nil, err
+	}
+	if err := exposeCustomAlertConfigSecrets(configs); err != nil {
+		return 0, nil, err
+	}
+	return total, configs, nil
+}
+
+func (a AlertService) UpdateAlertConfig(req dto.AlertConfigUpdate, operator string) error {
+	if req.Type == constant.Custom {
+		if req.ID != 0 && req.Revision == nil {
+			return repo.ErrAlertConfigRevisionRequired
+		}
+		return a.updateCustomAlertConfig(req, operator)
+	}
+	usesMutation, err := alertconfig.UsesMutation(req.Type, req.Config)
+	if err != nil {
+		return err
+	}
+	if req.ID != 0 && usesMutation && req.Revision == nil {
+		return repo.ErrAlertConfigRevisionRequired
+	}
+	var existing *model.AlertConfig
+	if req.ID != 0 {
+		stored, err := alertRepo.GetConfigById(req.ID)
+		if err != nil {
+			return err
+		}
+		if stored.Type != req.Type {
+			return fmt.Errorf("alert config %d has type %s, not %s", req.ID, stored.Type, req.Type)
+		}
+		existing = &stored
+	}
+	if err := a.validateCommunityAlertConfigType(req.Type); err != nil {
+		return err
+	}
+	prepared, err := alertconfig.Prepare(req.Type, req.Config, req.Status, existing)
+	if err != nil {
+		return err
+	}
+	req.Config = prepared
+	if err := a.checkAlertConfigDisplayNameUnique(req); err != nil {
+		return err
+	}
+	if err := a.checkAlertConfigSMSPhoneUnique(req); err != nil {
+		return err
+	}
+	if req.ID != 0 {
+		upMap := make(map[string]interface{})
+		upMap["id"] = req.ID
+		upMap["type"] = req.Type
+		upMap["title"] = req.Title
+		upMap["status"] = req.Status
+		upMap["config"] = req.Config
+		upMap["update_user"] = operator
+		if err := alertRepo.UpdateAlertConfigWithRevision(upMap, req.Revision, repo.WithByID(req.ID)); err != nil {
+			return err
+		}
+	} else {
+		var alertConfig model.AlertConfig
+		if err := copier.Copy(&alertConfig, &req); err != nil {
+			return buserr.WithErr("ErrStructTransform", err)
+		}
+		alertConfig.CreateUser = operator
+		alertConfig.UpdateUser = operator
+		if err := alertRepo.CreateAlertConfig(&alertConfig); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (a AlertService) updateCustomAlertConfig(req dto.AlertConfigUpdate, operator string) error {
+	if err := validateAlertConfigStatus(req.Status); err != nil {
+		return err
+	}
+
+	var existing *model.AlertConfig
+	if req.ID != 0 {
+		config, err := alertRepo.GetConfigById(req.ID)
+		if err != nil {
+			return err
+		}
+		if config.Type != constant.Custom {
+			return fmt.Errorf("alert config %d is not a custom webhook", req.ID)
+		}
+		existing = &config
+	}
+	prepared, err := alertwebhook.Prepare(req.Config, req.Status, existing)
+	if err != nil {
+		return err
+	}
+	validatedReq := req
+	validatedReq.Config = prepared.Config
+	if err := a.checkAlertConfigDisplayNameUnique(validatedReq); err != nil {
+		return err
+	}
+
+	if existing != nil {
+		return alertRepo.UpdateAlertConfigWithRevision(map[string]interface{}{
+			"type":          constant.Custom,
+			"title":         req.Title,
+			"status":        req.Status,
+			"config":        prepared.Config,
+			"secret_config": prepared.SecretConfig,
+			"update_user":   operator,
+		}, req.Revision, repo.WithByID(req.ID))
+	}
+
+	return alertRepo.CreateAlertConfig(&model.AlertConfig{
+		Type:         constant.Custom,
+		Title:        req.Title,
+		Status:       req.Status,
+		Config:       prepared.Config,
+		SecretConfig: prepared.SecretConfig,
+		CreateUser:   operator,
+		UpdateUser:   operator,
+	})
+}
+
+func (a AlertService) UpdateAlertConfigStatus(req dto.AlertConfigStatusUpdate, operator string) (string, error) {
+	if err := validateAlertConfigStatus(req.Status); err != nil {
+		return "", err
+	}
+	config, err := alertRepo.GetConfigById(req.ID)
+	if err != nil {
+		return "", err
+	}
+	name := alertConfigLogName(config.Config, config.Title)
+	if req.Status == constant.AlertEnable {
+		if err := a.validateCommunityAlertConfigType(config.Type); err != nil {
+			return name, err
+		}
+		if config.Type == constant.Custom {
+			if _, err := alertwebhook.Resolve(config); err != nil {
+				return name, err
+			}
+		}
+	}
+	return name, alertRepo.UpdateAlertConfig(map[string]interface{}{
+		"status":      req.Status,
+		"update_user": operator,
+	}, repo.WithByID(req.ID))
+}
+
+func validateAlertConfigStatus(status string) error {
+	if status != constant.AlertEnable && status != constant.AlertDisable {
+		return fmt.Errorf("alert config status must be Enable or Disable")
+	}
+	return nil
+}
+
+func exposeCustomAlertConfigSecrets(configs []model.AlertConfig) error {
+	for index := range configs {
+		if configs[index].Type != constant.Custom {
+			continue
+		}
+		view, err := alertwebhook.PlainView(configs[index])
+		if err != nil {
+			return fmt.Errorf("build editable custom alert config %d: %w", configs[index].ID, err)
+		}
+		configs[index].Config = view
+	}
+	return nil
+}
+
+func (a AlertService) checkAlertConfigSMSPhoneUnique(req dto.AlertConfigUpdate) error {
+	if req.Type != constant.SMSConfig {
+		return nil
+	}
+
+	phone := alertConfigSMSPhone(req.Config)
+	configs, err := alertRepo.AlertConfigList(alertRepo.WithByType(req.Type))
+	if err != nil {
+		return err
+	}
+
+	for _, config := range configs {
+		if req.ID != 0 && config.ID == req.ID {
+			continue
+		}
+		if alertConfigSMSPhone(config.Config) == phone {
+			return buserr.New("ErrAlertConfigPhoneExist")
+		}
+	}
+
+	return nil
+}
+
+func (a AlertService) checkAlertConfigDisplayNameUnique(req dto.AlertConfigUpdate) error {
+	if req.Type != constant.Custom && (global.CONF.Base.IsEnterprise || global.CONF.Base.Edition == "cn") {
+		return nil
+	}
+	displayName := alertConfigDisplayName(req.Type, req.Config)
+	if displayName == "" {
+		return nil
+	}
+
+	configs, err := alertRepo.AlertConfigList(alertRepo.WithByType(req.Type))
+	if err != nil {
+		return err
+	}
+
+	for _, config := range configs {
+		if req.ID != 0 && config.ID == req.ID {
+			continue
+		}
+		if alertConfigDisplayName(config.Type, config.Config) == displayName {
+			return buserr.New("ErrNameIsExist")
+		}
+	}
+
+	return nil
+}
+
+func (a AlertService) validateCommunityAlertMethod(method string) error {
+	methodTypes, err := a.validateAlertMethodReferences(method)
+	if err != nil {
+		return err
+	}
+	return a.validateAlertMethodEntitlement(methodTypes)
+}
+
+func (a AlertService) validateAlertMethodReferences(method string) ([]string, error) {
+	if strings.TrimSpace(method) == "" {
+		return nil, buserr.WithErr("ErrAlertMethodNotSupported", nil)
+	}
+	methodTypes := make([]string, 0)
+	for _, item := range strings.Split(method, ",") {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+		configType := ""
+		if configID, err := strconv.ParseUint(item, 10, 64); err == nil {
+			config, err := alertRepo.GetConfigById(uint(configID))
+			if err != nil {
+				return nil, err
+			}
+			configType = config.Type
+		} else {
+			var ok bool
+			configType, ok = legacyAlertMethodTypeMap[item]
+			if !ok {
+				return nil, buserr.WithErr("ErrAlertMethodNotSupported", nil)
+			}
+		}
+		if _, ok := supportedAlertMethodTypes[configType]; !ok {
+			return nil, buserr.WithErr("ErrAlertMethodNotSupported", nil)
+		}
+		methodTypes = append(methodTypes, configType)
+	}
+	if len(methodTypes) == 0 {
+		return nil, buserr.WithErr("ErrAlertMethodNotSupported", nil)
+	}
+	return methodTypes, nil
+}
+
+func (a AlertService) validateAlertMethodEntitlement(methodTypes []string) error {
+	for _, configType := range methodTypes {
+		if configType == constant.Custom {
+			continue
+		}
+		if global.CONF.Base.IsEnterprise || global.CONF.Base.Edition == "cn" {
+			continue
+		}
+		if _, ok := communityAlertMethodTypeNames[configType]; ok {
+			return buserr.WithErr("ErrAlertMethodNotSupported", nil)
+		}
+	}
+	return nil
+}
+
+func (a AlertService) validateCommunityAlertConfigType(configType string) error {
+	if configType == constant.Custom {
+		return nil
+	}
+	if global.CONF.Base.IsEnterprise || global.CONF.Base.Edition == "cn" {
+		return nil
+	}
+	if _, ok := communityAlertMethodTypeNames[configType]; ok {
+		return buserr.WithErr("ErrAlertMethodNotSupported", nil)
+	}
+	return nil
+}
+
+func alertConfigDisplayName(configType, configData string) string {
+	switch configType {
+	case constant.Email, constant.WeCom, constant.DingTalk, constant.FeiShu, constant.Bark, constant.SMS, constant.Custom:
+		var cfg struct {
+			DisplayName string `json:"displayName"`
+		}
+		if err := json.Unmarshal([]byte(configData), &cfg); err != nil {
+			return ""
+		}
+		return strings.TrimSpace(cfg.DisplayName)
+	default:
+		return ""
+	}
+}
+
+func alertConfigSMSPhone(configData string) string {
+	var cfg struct {
+		Phone string `json:"phone"`
+	}
+	if err := json.Unmarshal([]byte(configData), &cfg); err != nil {
+		return ""
+	}
+	return strings.TrimSpace(cfg.Phone)
+}
+
+func (a AlertService) DeleteAlertConfig(id uint) (string, error) {
+	config, err := alertRepo.GetConfigById(id)
+	if err != nil {
+		return "", err
+	}
+	name := alertConfigLogName(config.Config, config.Title)
+	usedAlerts, err := alertRepo.List(alertRepo.WithByAlertMethodContainsConfigID(id))
+	if err != nil {
+		return name, err
+	}
+	if len(usedAlerts) > 0 {
+		return name, buserr.New("ErrAlertConfigInUse")
+	}
+	return name, alertRepo.DeleteAlertConfig(repo.WithByID(id))
+}
+
+func (a AlertService) TestAlertConfig(req dto.AlertConfigTest) (bool, error) {
+	emailConfig, err := resolveEmailTestConfig(req)
+	if err != nil {
+		return false, err
+	}
+	username := emailConfig.UserName
+	if username == "" {
+		username = emailConfig.Sender
+	}
+	encodedDisplayName := mime.BEncoding.Encode("UTF-8", emailConfig.DisplayName)
+	cfg := email.SMTPConfig{
+		Host:       emailConfig.Host,
+		Port:       emailConfig.Port,
+		Sender:     emailConfig.Sender,
+		Username:   username,
+		Password:   emailConfig.Password,
+		From:       fmt.Sprintf(`"%s" <%s>`, encodedDisplayName, emailConfig.Sender),
+		Encryption: emailConfig.Encryption,
+		Recipient:  emailConfig.Recipient,
+	}
+
+	msg := email.EmailMessage{
+		Subject: i18n.GetMsgByKey("TestAlertTitle"),
+		Body:    i18n.GetMsgByKey("TestAlertMessage"),
+		IsHTML:  false,
+	}
+	transport := xpack.MultiNodeProvider.LoadRequestTransport()
+	if err := email.SendMail(cfg, msg, transport); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func resolveEmailTestConfig(req dto.AlertConfigTest) (dto.AlertEmailConfig, error) {
+	emailConfig := dto.AlertEmailConfig{
+		Host:        req.Host,
+		Port:        req.Port,
+		Sender:      req.Sender,
+		UserName:    req.UserName,
+		Password:    req.Password,
+		DisplayName: req.DisplayName,
+		Encryption:  req.Encryption,
+		Recipient:   req.Recipient,
+	}
+	if strings.TrimSpace(req.Config) != "" {
+		configType := req.Type
+		if configType == "" {
+			configType = constant.EmailConfig
+		}
+		if configType != constant.EmailConfig {
+			return dto.AlertEmailConfig{}, fmt.Errorf("alert config test type must be email")
+		}
+		var existing *model.AlertConfig
+		if req.ID != 0 {
+			stored, err := alertRepo.GetConfigById(req.ID)
+			if err != nil {
+				return dto.AlertEmailConfig{}, err
+			}
+			existing = &stored
+		}
+		prepared, err := alertconfig.Prepare(configType, req.Config, constant.AlertEnable, existing)
+		if err != nil {
+			return dto.AlertEmailConfig{}, err
+		}
+		if err := json.Unmarshal([]byte(prepared), &emailConfig); err != nil {
+			return dto.AlertEmailConfig{}, fmt.Errorf("decode email alert config: %w", err)
+		}
+	}
+	return emailConfig, nil
+}
+
+func (a AlertService) TestCustomAlertConfig(req dto.AlertConfigTest, lang string) (dto.AlertConfigTestResult, error) {
+	if req.Type != constant.Custom {
+		return dto.AlertConfigTestResult{}, fmt.Errorf("alert config test type must be custom")
+	}
+	var existing *model.AlertConfig
+	if req.ID != 0 {
+		config, err := alertRepo.GetConfigById(req.ID)
+		if err != nil {
+			return dto.AlertConfigTestResult{}, err
+		}
+		if config.Type != constant.Custom {
+			return dto.AlertConfigTestResult{}, fmt.Errorf("alert config %d is not a custom webhook", req.ID)
+		}
+		existing = &config
+	}
+	prepared, err := alertwebhook.Prepare(req.Config, constant.AlertEnable, existing)
+	if err != nil {
+		return dto.AlertConfigTestResult{}, err
+	}
+	resolved, err := alertwebhook.Resolve(model.AlertConfig{
+		Type:         constant.Custom,
+		Config:       prepared.Config,
+		SecretConfig: prepared.SecretConfig,
+	})
+	if err != nil {
+		return dto.AlertConfigTestResult{}, err
+	}
+	tester, ok := xpack.AlertProvider.(providers.CustomWebhookTester)
+	if !ok {
+		if global.LOG != nil {
+			global.LOG.Warnf("webhook test failed: %v", providers.ErrCustomWebhookUnsupported)
+		}
+		return dto.AlertConfigTestResult{
+			Success: false,
+			Message: providers.ErrCustomWebhookUnsupported.Error(),
+		}, nil
+	}
+	return tester.TestCustomWebhook(resolved, lang)
+}
+
+func (a AlertService) ExternalUpdateAlert(updateAlert dto.AlertCreate, operator string) error {
+	var methodTypes []string
+	if updateAlert.SendCount != 0 || strings.TrimSpace(updateAlert.Method) != "" {
+		var err error
+		methodTypes, err = a.validateAlertMethodReferences(updateAlert.Method)
+		if err != nil {
+			return err
+		}
+	}
+	if updateAlert.SendCount != 0 {
+		if err := a.validateAlertMethodEntitlement(methodTypes); err != nil {
+			return err
+		}
+	}
+	upMap := make(map[string]interface{})
+	var newStatus string
+	if updateAlert.SendCount == 0 {
+		newStatus = constant.AlertDisable
+	} else {
+		newStatus = constant.AlertEnable
+		upMap["send_count"] = updateAlert.SendCount
+		if updateAlert.Method != "" {
+			upMap["method"] = updateAlert.Method
+		}
+	}
+	upMap["status"] = newStatus
+
+	alertInfo, _ := alertRepo.Get(
+		alertRepo.WithByType(updateAlert.Type),
+		alertRepo.WithByProject(updateAlert.Project),
+	)
+	advanced, err := prepareCronJobAlertParams(updateAlert.Type, alertInfo.AdvancedParams, updateAlert.AdvancedParams)
+	if err != nil {
+		return err
+	}
+	updateAlert.AdvancedParams = advanced
+	if alertUtil.GetCronJobType(updateAlert.Type) == "cronJob" {
+		upMap["advanced_params"] = advanced
+	}
+	if newStatus == constant.AlertEnable {
+		method := updateAlert.Method
+		if method == "" {
+			method = alertInfo.Method
+		}
+		if err := a.validateCronJobAlertChannels(updateAlert.Type, advanced, method); err != nil {
+			return err
+		}
+	}
+
+	if alertInfo.ID > 0 {
+		shouldUpdate := false
+
+		if alertInfo.Status != newStatus {
+			shouldUpdate = true
+		}
+		if val, ok := upMap["send_count"]; ok && val != alertInfo.SendCount {
+			shouldUpdate = true
+		}
+		if val, ok := upMap["method"]; ok && val != "" && val != alertInfo.Method {
+			shouldUpdate = true
+		}
+		if val, ok := upMap["advanced_params"]; ok && val != alertInfo.AdvancedParams {
+			shouldUpdate = true
+		}
+
+		if shouldUpdate {
+			if err := alertRepo.Update(
+				upMap,
+				alertRepo.WithByProject(updateAlert.Project),
+				alertRepo.WithByType(updateAlert.Type),
+			); err != nil {
+				return err
+			}
+		}
+	} else {
+		if updateAlert.Method != "" && updateAlert.Title != "" {
+			updateAlert.Status = newStatus
+			if err := a.CreateAlert(updateAlert, operator); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func prepareCronJobAlertParams(alertType, previous, incoming string) (string, error) {
+	if alertUtil.GetCronJobType(alertType) != "cronJob" {
+		return incoming, nil
+	}
+	return alertUtil.MergeCronJobAlertParams(previous, incoming)
+}
+
+func (a AlertService) validateCronJobAlertChannels(alertType, advanced, method string) error {
+	if alertUtil.GetCronJobType(alertType) != "cronJob" {
+		return nil
+	}
+	mode, err := alertUtil.CronJobAlertTriggerMode(advanced)
+	if err != nil || mode != alertUtil.CronJobAlertSuccess {
+		return err
+	}
+	_, err = a.validateAlertMethodReferences(method)
+	return err
+}
+
+func alertConfigLogName(config, title string) string {
+	var value struct {
+		DisplayName string `json:"displayName"`
+	}
+	if json.Unmarshal([]byte(config), &value) == nil && strings.TrimSpace(value.DisplayName) != "" {
+		return strings.TrimSpace(value.DisplayName)
+	}
+	return title
+}
+
