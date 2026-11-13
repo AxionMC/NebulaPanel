@@ -206,14 +206,16 @@ download_binaries() {
 # 生成 Dockerfile（core）
 ###############################################################################
 write_dockerfile_core() {
-    cat > "${NP_DOCKER_DIR}/Dockerfile.core" <<EOF
+    cat > "${NP_DOCKER_DIR}/Dockerfile.core" <<'EOF'
 FROM debian:bookworm-slim
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /opt/NebulaPanel/{conf,db,secret,logs,backup,geo,tmp}
+RUN mkdir -p /opt/NebulaPanel/conf /opt/NebulaPanel/db /opt/NebulaPanel/secret \
+             /opt/NebulaPanel/logs /opt/NebulaPanel/backup /opt/NebulaPanel/geo \
+             /opt/NebulaPanel/tmp
 WORKDIR /opt/NebulaPanel
 
 COPY NebulaPanel-core /usr/local/bin/NebulaPanel-core
@@ -229,14 +231,16 @@ EOF
 # 生成 Dockerfile（agent）
 ###############################################################################
 write_dockerfile_agent() {
-    cat > "${NP_DOCKER_DIR}/Dockerfile.agent" <<EOF
+    cat > "${NP_DOCKER_DIR}/Dockerfile.agent" <<'EOF'
 FROM debian:bookworm-slim
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /opt/NebulaPanel/{conf,db,secret,logs,backup,geo,tmp}
+RUN mkdir -p /opt/NebulaPanel/conf /opt/NebulaPanel/db /opt/NebulaPanel/secret \
+             /opt/NebulaPanel/logs /opt/NebulaPanel/backup /opt/NebulaPanel/geo \
+             /opt/NebulaPanel/tmp
 WORKDIR /opt/NebulaPanel
 
 COPY NebulaPanel-agent /usr/local/bin/NebulaPanel-agent
@@ -253,8 +257,6 @@ EOF
 ###############################################################################
 write_docker_compose() {
     cat > "${NP_DOCKER_DIR}/docker-compose.yml" <<EOF
-version: "3.8"
-
 services:
   nebulapanel-core:
     build:

@@ -189,55 +189,72 @@ jobs:
   # 3. 构建 Docker 镜像并推送到 GHCR（仅 tag 或手动触发）
   # ==========================================================================
   build-docker:
-    name: Build Docker Image
+    name: Build Docker Image (multi-arch)
     runs-on: ubuntu-latest
     needs: build-backend
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
       packages: write
-    strategy:
-      matrix:
-        goarch:
-          - amd64
-          - arm64
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download binaries
+      - name: Download amd64 binaries
         uses: actions/download-artifact@v4
         with:
-          name: nebulapanel-linux-${{ matrix.goarch }}
-          path: build
+          name: nebulapanel-linux-amd64
+          path: artifacts/amd64
 
-      - name: Prepare build context
+      - name: Download arm64 binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: nebulapanel-linux-arm64
+          path: artifacts/arm64
+
+      - name: Prepare multi-arch build context
         shell: bash
         run: |
           mkdir -p docker-context
-          cd build
-          tar -xzf NebulaPanel-linux-${{ matrix.goarch }}.tar.gz
-          mv ${{ env.CORE_NAME }}-${{ matrix.goarch }} ../docker-context/NebulaPanel-core
-          mv ${{ env.AGENT_NAME }}-${{ matrix.goarch }} ../docker-context/NebulaPanel-agent
-          cd ..
-          chmod +x docker-context/NebulaPanel-core docker-context/NebulaPanel-agent
+          for arch in amd64 arm64; do
+            mkdir -p "docker-context/${arch}"
+            tar -xzf "artifacts/${arch}/NebulaPanel-linux-${arch}.tar.gz" \
+              -C "docker-context/${arch}"
+            mv "docker-context/${arch}/NebulaPanel-core-${arch}" \
+               "docker-context/${arch}/NebulaPanel-core"
+            mv "docker-context/${arch}/NebulaPanel-agent-${arch}" \
+               "docker-context/${arch}/NebulaPanel-agent"
+            chmod +x "docker-context/${arch}/NebulaPanel-core" \
+                     "docker-context/${arch}/NebulaPanel-agent"
+          done
+          find docker-context -maxdepth 2 -type f | sort
 
       - name: Write Dockerfile
         shell: bash
         run: |
           cat > docker-context/Dockerfile <<'EOF'
           FROM debian:bookworm-slim
+
+          ARG TARGETARCH
+          ARG TARGETVARIANT
+
           RUN apt-get update \
               && apt-get install -y --no-install-recommends ca-certificates tzdata \
               && rm -rf /var/lib/apt/lists/*
-          RUN mkdir -p /opt/NebulaPanel/{conf,db,secret,logs,backup,geo,tmp}
+
+          RUN mkdir -p /opt/NebulaPanel/conf /opt/NebulaPanel/db /opt/NebulaPanel/secret \
+                       /opt/NebulaPanel/logs /opt/NebulaPanel/backup /opt/NebulaPanel/geo \
+                       /opt/NebulaPanel/tmp
           WORKDIR /opt/NebulaPanel
-          COPY NebulaPanel-core /usr/local/bin/NebulaPanel-core
-          COPY NebulaPanel-agent /usr/local/bin/NebulaPanel-agent
+
+          COPY ${TARGETARCH}/NebulaPanel-core /usr/local/bin/NebulaPanel-core
+          COPY ${TARGETARCH}/NebulaPanel-agent /usr/local/bin/NebulaPanel-agent
           RUN chmod +x /usr/local/bin/NebulaPanel-core /usr/local/bin/NebulaPanel-agent
+
           EXPOSE 9999
           ENTRYPOINT ["NebulaPanel-core", "start"]
           EOF
+          cat docker-context/Dockerfile
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -261,11 +278,11 @@ jobs:
             type=ref,event=tag
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
 
-      - name: Build and push
+      - name: Build and push (linux/amd64 + linux/arm64)
         uses: docker/build-push-action@v6
         with:
           context: docker-context
-          platforms: linux/${{ matrix.goarch }}
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
