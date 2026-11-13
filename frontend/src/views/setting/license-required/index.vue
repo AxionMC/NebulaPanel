@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="license-required-page flex items-center justify-center min-h-screen relative bg-gray-100">
         <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" :style="backgroundStyle"></div>
         <div
