@@ -143,6 +143,15 @@ jobs:
         working-directory: agent
         run: go mod tidy
 
+      - name: Show Go module context (debug)
+        run: |
+          echo "--- go version ---"; go version
+          echo "--- core/go.mod head ---"; head -8 core/go.mod
+          echo "--- core/cmd/server listing ---"; ls -la core/cmd/server
+          echo "--- core/cmd/server/cmd listing ---"; ls -la core/cmd/server/cmd
+          echo "--- core/cmd/server/docs listing ---"; ls -la core/cmd/server/docs
+          echo "--- web listing ---"; ls -la core/cmd/server/web | head -20
+
       - name: Build ${{ env.CORE_NAME }}
         working-directory: core
         env:
@@ -151,7 +160,10 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         run: |
           mkdir -p ../build
-          go build -trimpath -ldflags '-s -w' \
+          # -mod=mod：允许构建时按当前构建约束自动补齐 go.sum。
+          # core 内含 //go:build xpack 的源文件引用未随 OSS 源码发布的企业包，
+          # 因此不能对 core 执行 go mod tidy。
+          go build -mod=mod -trimpath -ldflags '-s -w' \
             -o ../build/${{ env.CORE_NAME }}-${{ matrix.goarch }} ./cmd/server/main.go
 
       - name: Build ${{ env.AGENT_NAME }}
@@ -162,7 +174,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         run: |
           mkdir -p ../build
-          go build -trimpath -ldflags '-s -w' \
+          go build -mod=mod -trimpath -ldflags '-s -w' \
             -o ../build/${{ env.AGENT_NAME }}-${{ matrix.goarch }} ./cmd/server/main.go
 
       - name: Package binaries

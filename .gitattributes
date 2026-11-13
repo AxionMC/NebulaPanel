@@ -1,5 +1,21 @@
+# 语言统计修正（避免前端源码被计入 Go）
 *.ts linguist-language=Go
 *.js linguist-language=Go
 *.css linguist-language=Go
 *.scss linguist-language=Go
 *.html linguist-language=Go
+
+# 换行符锁定：脚本必须在 Linux 上以 LF 执行，
+# 否则 Windows 上 core.autocrlf=true 检出后会带 CR，导致 bash 报
+# "bad interpreter: /usr/bin/env bash^M"
+*.sh      text eol=lf
+*.bash    text eol=lf
+*.service text eol=lf
+*.mod     text eol=lf
+*.sum     text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.json    text eol=lf
+*.go      text eol=lf
+Makefile  text eol=lf
+VERSION   text eol=lf
