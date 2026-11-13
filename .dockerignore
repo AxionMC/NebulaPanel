@@ -1,0 +1,37 @@
+# NebulaPanel Docker 构建忽略清单
+# 说明：仅在使用仓库根目录作为构建上下文时生效。
+# 注意：不要排除 core/cmd/server/web —— 前端产物需要被 embed 进 NebulaPanel-core。
+
+# 版本控制与 CI
+.git
+.gitignore
+.gitattributes
+.github
+.gitmodules
+
+# 依赖与构建缓存
+**/node_modules
+frontend/dist
+frontend/.vite
+**/.cache
+**/__pycache__
+
+# 本地编译产物（如需在镜像内使用请改用 build 目录单独挂载/拷贝）
+build
+
+# 文档与无关资产
+docs
+*.md
+LICENSE
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+SECURITY.md
+OWNERS
+sonar-project.properties
+
+# 编辑器与系统文件
+.vscode
+.idea
+.DS_Store
+*.swp
+*.log

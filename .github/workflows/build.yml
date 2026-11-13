@@ -19,6 +19,9 @@ on:
 
 env:
   GO_VERSION_FILE: core/go.mod
+  # 默认与 core/go.mod 的 go 指令保持一致；若 runner 上该版本不可用，
+  # 可在仓库 Settings → Variables 里设置 GO_VERSION 覆盖，无需改工作流。
+  GO_VERSION_DEFAULT: '1.27.3'
   NODE_VERSION: '20'
   CORE_NAME: NebulaPanel-core
   AGENT_NAME: NebulaPanel-agent
@@ -109,12 +112,15 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: ${{ env.GO_VERSION_FILE }}
+          go-version: ${{ vars.GO_VERSION || '1.27.3' }}
           check-latest: true
           cache: true
           cache-dependency-path: |
             core/go.sum
             agent/go.sum
+
+      - name: Verify Go toolchain
+        run: go version
 
       - name: Resolve build version
         id: ver
@@ -125,8 +131,13 @@ jobs:
           elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           else
-            echo "version=${BINARY_VERSION}-$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
+            base="$(cat VERSION 2>/dev/null | tr -d '[:space:]')"
+            [ -z "$base" ] && base="${BINARY_VERSION}"
+            echo "version=${base}-$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
           fi
+
+      - name: Show resolved version
+        run: echo "Build version = ${{ steps.ver.outputs.version }}"
 
       - name: Tidy agent modules
         working-directory: agent
