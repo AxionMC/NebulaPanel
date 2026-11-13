@@ -1,4 +1,4 @@
-﻿﻿<p align="center"><a href="https://NebulaPanel.cn"><img src="http://NebulaPanel.oss-cn-hangzhou.aliyuncs.com/img/NebulaPanel-logo.png" alt="NebulaPanel" width="300" /></a></p>
+<p align="center"><a href="https://NebulaPanel.cn"><img src="http://NebulaPanel.oss-cn-hangzhou.aliyuncs.com/img/NebulaPanel-logo.png" alt="NebulaPanel" width="300" /></a></p>
 <p align="center"><b>Top-Rated Web-based Linux Server Management Tool</b></p>
 <p align="center"><b>現代化、開源的 Linux 伺服器運維管理面板</b></p>
 <p align="center">
@@ -32,7 +32,6 @@
   <a href="/docs/README.lo.md"><img alt="ພາສາລາວ" src="https://img.shields.io/badge/%E0%BA%9E%E0%BA%B2%E0%BA%AA%E0%BA%B2%E0%BA%A5%E0%BA%B2%E0%BA%A7-d9d9d9"></a>
 </p>
 
-[![Watch the video](https://resource.fit2cloud.com/NebulaPanel/img/overview_video.png)](https://www.bilibili.com/video/BV1Mt421n7LZ/)
 
 ------------------------------
 ## 什麼是 NebulaPanel？
@@ -52,14 +51,14 @@ NebulaPanel 是新一代的 Linux 伺服器運維管理面板。
 執行如下指令一鍵安裝 NebulaPanel:
 
 ```sh
-curl -sSL https://resource.fit2cloud.com/NebulaPanel/package/quick_start.sh -o quick_start.sh && sudo bash quick_start.sh
+git clone https://github.com/AxionMC/NebulaPanel.git && cd NebulaPanel && sudo bash scripts/install.sh
 ```
 
-如果是用於離線環境，推薦使用 [安裝包方式](https://docs.fit2cloud.com/NebulaPanel/installation/enterprise-installation/) 進行安裝部署。
+如果是用於離線環境，推薦使用 [安裝包方式](https://github.com/AxionMC/NebulaPanel/blob/main/BUILD.md) 進行安裝部署。
 
 **學習資料**
 
-- [線上文件](https://docs.fit2cloud.com/NebulaPanel/)
+- [線上文件](https://github.com/AxionMC/NebulaPanel/blob/main/BUILD.md)
 - [社區論壇](https://bbs.fit2cloud.com/c/1p/7)
 - [如何加入微信交流群?](https://bbs.fit2cloud.com/t/topic/2147)
 

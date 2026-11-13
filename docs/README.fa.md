@@ -1,4 +1,4 @@
-﻿﻿<p align="center"><a href="https://NebulaPanel.pro"><img src="https://resource.NebulaPanel.pro/img/NebulaPanel-logo.png" alt="NebulaPanel" width="300" /></a></p>
+﻿<p align="center"><a href="https://NebulaPanel.pro"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
 
 <h3 align="center">پنل کنترل سرور مجازی متن‌باز با پشتیبانی بومی از عامل‌های هوش مصنوعی</h3>
 
@@ -71,7 +71,7 @@ NebulaPanel یک پنل کنترل سرور مجازی مدرن و متن‌با
 > حدود ۶۰ ثانیه زمان می‌برد.
 
 ```bash
-bash -c "$(curl -sSL https://resource.NebulaPanel.pro/v2/quick_start.sh)"
+git clone https://github.com/AxionMC/NebulaPanel.git && cd NebulaPanel && sudo bash scripts/install.sh
 ```
 
 پس از نصب، `http://<your-server-ip>:<port>/<security-path>` را در مرورگر خود باز کنید.  
@@ -79,7 +79,6 @@ bash -c "$(curl -sSL https://resource.NebulaPanel.pro/v2/quick_start.sh)"
 
 ## تصویر صفحه
 
-![رابط کاربری NebulaPanel](https://resource.NebulaPanel.pro/img/overview_en_v2.png)
 
 ## نسخه حرفه‌ای
 

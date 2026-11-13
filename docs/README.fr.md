@@ -1,4 +1,4 @@
-﻿﻿<p align="center"><a href="https://NebulaPanel.pro"><img src="https://resource.NebulaPanel.pro/img/NebulaPanel-logo.png" alt="NebulaPanel" width="300" /></a></p>
+<p align="center"><a href="https://NebulaPanel.pro"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
 <p align="center"><b>Outil de gestion de serveurs Linux basé sur le web le mieux noté</b></p>
 <p align="center">
   <a href="https://trendshift.io/repositories/2462" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2462" alt="NebulaPanel%2FNebulaPanel | Trendshift" style="width: 180px; height: auto;" /></a>
@@ -47,14 +47,13 @@ NebulaPanel est un panneau de contrôle basé sur le web, moderne et open source
 Exécutez le script ci-dessous et suivez les instructions pour installer NebulaPanel :
 
 ```bash
-curl -sSL https://resource.NebulaPanel.pro/quick_start.sh -o quick_start.sh && bash quick_start.sh
+git clone https://github.com/AxionMC/NebulaPanel.git && cd NebulaPanel && sudo bash scripts/install.sh
 ```
 
-Veuillez vous référer à notre [documentation](https://docs.NebulaPanel.pro/quick_start/) pour plus d'informations.
+Veuillez vous référer à notre [documentation](https://github.com/AxionMC/NebulaPanel) pour plus d'informations.
 
 ## Capture d'écran
 
-![UI Display](https://resource.NebulaPanel.pro/img/NebulaPanel.png)
 
 ## Histoire des étoiles
 

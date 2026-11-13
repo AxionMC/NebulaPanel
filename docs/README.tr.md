@@ -1,4 +1,4 @@
-﻿﻿<p align="center"><a href="https://NebulaPanel.pro"><img src="https://resource.NebulaPanel.pro/img/NebulaPanel-logo.png" alt="NebulaPanel" width="300" /></a></p>
+<p align="center"><a href="https://NebulaPanel.pro"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
 <p align="center"><b>En Yüksek Puanlı Web Tabanlı Linux Sunucu Yönetim Aracı</b></p>
 <p align="center">
   <a href="https://trendshift.io/repositories/2462" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2462" alt="NebulaPanel%2FNebulaPanel | Trendshift" style="width: 180px; height: auto;" /></a>
@@ -49,14 +49,13 @@ NebulaPanel, Linux sunucu yönetimi için modern, açık kaynaklı bir web taban
 Aşağıdaki komutu çalıştırın ve NebulaPanel’i kurmak için yönergeleri takip edin:
 
 ```sh
-curl -sSL https://resource.NebulaPanel.pro/quick_start.sh -o quick_start.sh && bash quick_start.sh
+git clone https://github.com/AxionMC/NebulaPanel.git && cd NebulaPanel && sudo bash scripts/install.sh
 ```
 
-Daha fazla detay için [dokümantasyonumuza](https://docs.NebulaPanel.pro/quick_start/) göz atın.
+Daha fazla detay için [dokümantasyonumuza](https://github.com/AxionMC/NebulaPanel) göz atın.
 
 ## Ekran Görüntüsü
 
-![UI Display](https://resource.NebulaPanel.pro/img/NebulaPanel.png)
 
 ## Yıldız Geçmişi
 

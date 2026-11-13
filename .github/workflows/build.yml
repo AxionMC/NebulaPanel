@@ -1,0 +1,319 @@
+name: Build & Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+      - 'V*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '构建版本号（留空则自动取 git tag 或 dev-<sha>）'
+        required: false
+        default: ''
+
+env:
+  GO_VERSION_FILE: core/go.mod
+  NODE_VERSION: '20'
+  CORE_NAME: NebulaPanel-core
+  AGENT_NAME: NebulaPanel-agent
+  BINARY_VERSION: V1.0.0
+
+jobs:
+  # ==========================================================================
+  # 1. 构建前端（产物输出到 core/cmd/server/web，由后端 embed 内置）
+  # ==========================================================================
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            pnpm install --no-frozen-lockfile
+          else
+            npm install --legacy-peer-deps
+          fi
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            pnpm run build:pro
+          else
+            npm run build:pro
+          fi
+
+      - name: Upload frontend assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-web
+          path: core/cmd/server/web
+          retention-days: 1
+          if-no-files-found: error
+
+  # ==========================================================================
+  # 2. 交叉编译后端（core + agent，amd64 / arm64）
+  # ==========================================================================
+  build-backend:
+    name: Build Backend (${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    needs: build-frontend
+    strategy:
+      fail-fast: false
+      matrix:
+        goarch:
+          - amd64
+          - arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download frontend assets
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-web
+          path: core/cmd/server/web
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ env.GO_VERSION_FILE }}
+          check-latest: true
+          cache: true
+          cache-dependency-path: |
+            core/go.sum
+            agent/go.sum
+
+      - name: Resolve build version
+        id: ver
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${BINARY_VERSION}-$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Tidy agent modules
+        working-directory: agent
+        run: go mod tidy
+
+      - name: Build ${{ env.CORE_NAME }}
+        working-directory: core
+        env:
+          CGO_ENABLED: '0'
+          GOOS: linux
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          mkdir -p ../build
+          go build -trimpath -ldflags '-s -w' \
+            -o ../build/${{ env.CORE_NAME }}-${{ matrix.goarch }} ./cmd/server/main.go
+
+      - name: Build ${{ env.AGENT_NAME }}
+        working-directory: agent
+        env:
+          CGO_ENABLED: '0'
+          GOOS: linux
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          mkdir -p ../build
+          go build -trimpath -ldflags '-s -w' \
+            -o ../build/${{ env.AGENT_NAME }}-${{ matrix.goarch }} ./cmd/server/main.go
+
+      - name: Package binaries
+        shell: bash
+        run: |
+          cd build
+          tar -czf NebulaPanel-linux-${{ matrix.goarch }}.tar.gz \
+            ${{ env.CORE_NAME }}-${{ matrix.goarch }} \
+            ${{ env.AGENT_NAME }}-${{ matrix.goarch }}
+          sha256sum NebulaPanel-linux-${{ matrix.goarch }}.tar.gz > NebulaPanel-linux-${{ matrix.goarch }}.tar.gz.sha256
+          ls -lh
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: nebulapanel-linux-${{ matrix.goarch }}
+          path: |
+            build/NebulaPanel-linux-${{ matrix.goarch }}.tar.gz
+            build/NebulaPanel-linux-${{ matrix.goarch }}.tar.gz.sha256
+          retention-days: 7
+          if-no-files-found: error
+
+  # ==========================================================================
+  # 3. 构建 Docker 镜像并推送到 GHCR（仅 tag 或手动触发）
+  # ==========================================================================
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: build-backend
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        goarch:
+          - amd64
+          - arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: nebulapanel-linux-${{ matrix.goarch }}
+          path: build
+
+      - name: Prepare build context
+        shell: bash
+        run: |
+          mkdir -p docker-context
+          cd build
+          tar -xzf NebulaPanel-linux-${{ matrix.goarch }}.tar.gz
+          mv ${{ env.CORE_NAME }}-${{ matrix.goarch }} ../docker-context/NebulaPanel-core
+          mv ${{ env.AGENT_NAME }}-${{ matrix.goarch }} ../docker-context/NebulaPanel-agent
+          cd ..
+          chmod +x docker-context/NebulaPanel-core docker-context/NebulaPanel-agent
+
+      - name: Write Dockerfile
+        shell: bash
+        run: |
+          cat > docker-context/Dockerfile <<'EOF'
+          FROM debian:bookworm-slim
+          RUN apt-get update \
+              && apt-get install -y --no-install-recommends ca-certificates tzdata \
+              && rm -rf /var/lib/apt/lists/*
+          RUN mkdir -p /opt/NebulaPanel/{conf,db,secret,logs,backup,geo,tmp}
+          WORKDIR /opt/NebulaPanel
+          COPY NebulaPanel-core /usr/local/bin/NebulaPanel-core
+          COPY NebulaPanel-agent /usr/local/bin/NebulaPanel-agent
+          RUN chmod +x /usr/local/bin/NebulaPanel-core /usr/local/bin/NebulaPanel-agent
+          EXPOSE 9999
+          ENTRYPOINT ["NebulaPanel-core", "start"]
+          EOF
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: docker-context
+          platforms: linux/${{ matrix.goarch }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  # ==========================================================================
+  # 4. 发布 Release（仅 tag 触发）
+  # ==========================================================================
+  release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs: build-backend
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Collect release files
+        shell: bash
+        run: |
+          mkdir -p release
+          find artifacts -type f \( -name '*.tar.gz' -o -name '*.sha256' \) -exec cp {} release/ \;
+          ls -lh release
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: NebulaPanel ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: release/*
+          body: |
+            ## NebulaPanel ${{ github.ref_name }}
+
+            Linux 运维管理面板，基于 Go + Vue 3 构建。
+
+            ### 一键安装
+
+            ```bash
+            git clone https://github.com/${{ github.repository }}.git
+            cd NebulaPanel
+            bash scripts/install.sh
+            ```
+
+            安装脚本为全程交互式，可自定义安装目录、端口、安全入口、管理员账号与密码。
+
+            ### 二进制文件
+
+            | 架构 | 文件 |
+            |------|------|
+            | x86_64 | `NebulaPanel-linux-amd64.tar.gz` |
+            | ARM64 | `NebulaPanel-linux-arm64.tar.gz` |
+
+            每个压缩包内含 `NebulaPanel-core` 与 `NebulaPanel-agent`。

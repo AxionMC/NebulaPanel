@@ -58,18 +58,30 @@ NebulaPanel is a modern, open-source Linux server management panel and a lightwe
 
 ## Quick Start
 
-Prepare your Linux server and run the following script:
+Prepare your Linux server (root required) and run the following:
 
 ```bash
-bash -c "$(curl -sSL https://resource.NebulaPanel.pro/v2/quick_start.sh)"
+git clone https://github.com/AxionMC/NebulaPanel.git
+cd NebulaPanel
+sudo bash scripts/install.sh
 ```
+
+The installer is fully interactive and asks for:
+
+- Installation directory (default `/opt`)
+- Panel port (default `9999`)
+- Security entrance path (default `nebula`)
+- Admin username (default `admin`)
+- Admin password (default `admin123`)
+- Interface language (default `zh`)
+
+It will then detect Docker (skip if installed, install if missing), build the `NebulaPanel-core` / `NebulaPanel-agent` images, start the stack with `docker compose`, and finally offer to switch the Docker registry mirror to `hub.002230.xyz:44300`.
 
 After installation, open `http://<your-server-ip>:<port>/<security-path>` in your browser.  
 Run `npctl user-info` via SSH if you need to retrieve your access credentials.
 
-## Screenshot
+> Panel version is pinned to **V1.0.0**. The built-in online updater has been removed from this release.
 
-![NebulaPanel UI](https://resource.NebulaPanel.pro/img/overview_en_v2.png)
 
 ## Pro Edition
 

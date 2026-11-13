@@ -1,4 +1,4 @@
-﻿﻿<p align="center"><a href="https://NebulaPanel.pro"><img src="https://resource.NebulaPanel.pro/img/NebulaPanel-logo.png" alt="NebulaPanel" width="300" /></a></p>
+<p align="center"><a href="https://NebulaPanel.pro"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
 <p align="center"><b>Alat Pengurusan Pelayan Linux Berasaskan Web Terbaik</b></p>
 <p align="center">
   <a href="https://trendshift.io/repositories/2462" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2462" alt="NebulaPanel%2FNebulaPanel | Trendshift" style="width: 180px; height: auto;" /></a>
@@ -47,14 +47,13 @@ NebulaPanel ialah panel kawalan moden sumber terbuka berasaskan web untuk pengur
 Jalankan skrip di bawah dan ikuti arahan untuk memasang NebulaPanel:
 
 ```bash
-curl -sSL https://resource.NebulaPanel.pro/quick_start.sh -o quick_start.sh && bash quick_start.sh
+git clone https://github.com/AxionMC/NebulaPanel.git && cd NebulaPanel && sudo bash scripts/install.sh
 ```
 
-Sila rujuk [dokumentasi](https://docs.NebulaPanel.pro/quick_start/) untuk maklumat lanjut.
+Sila rujuk [dokumentasi](https://github.com/AxionMC/NebulaPanel) untuk maklumat lanjut.
 
 ## Tangkap Layar
 
-![UI Display](https://resource.NebulaPanel.pro/img/NebulaPanel.png)
 
 ## Sejarah Bintang
 

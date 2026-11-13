@@ -1,4 +1,4 @@
-﻿﻿<p align="center"><a href="https://NebulaPanel.pro"><img src="https://resource.NebulaPanel.pro/img/NebulaPanel-logo.png" alt="NebulaPanel" width="300" /></a></p>
+﻿<p align="center"><a href="https://NebulaPanel.pro"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
 
 <h3 align="center">ແຜງຄວບຄຸມ VPS ແບບໂອເພນຊອດ ພ້ອມການຮອງຮັບເອເຈນ AI ໃນຕົວ</h3>
 
@@ -71,7 +71,7 @@ NebulaPanel ແມ່ນແຜງຄວບຄຸມ VPS ທີ່ທັນສະ
 > ໃຊ້ເວລາປະມານ 60 ວິນາທີ.
 
 ```bash
-bash -c "$(curl -sSL https://resource.NebulaPanel.pro/v2/quick_start.sh)"
+git clone https://github.com/AxionMC/NebulaPanel.git && cd NebulaPanel && sudo bash scripts/install.sh
 ```
 
 ຫຼັງຈາກຕິດຕັ້ງແລ້ວ, ເປີດ `http://<your-server-ip>:<port>/<security-path>` ໃນເບຣົາເຊີ.  
@@ -79,7 +79,6 @@ bash -c "$(curl -sSL https://resource.NebulaPanel.pro/v2/quick_start.sh)"
 
 ## ພາບໜ້າຈໍ
 
-![UI ຂອງ NebulaPanel](https://resource.NebulaPanel.pro/img/overview_en_v2.png)
 
 ## ຮຸ່ນ Pro
 

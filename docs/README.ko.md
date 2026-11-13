@@ -1,4 +1,4 @@
-﻿﻿<p align="center"><a href="https://NebulaPanel.pro"><img src="https://resource.NebulaPanel.pro/img/NebulaPanel-logo.png" alt="NebulaPanel" width="300" /></a></p>
+<p align="center"><a href="https://NebulaPanel.pro"><img src="https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/frontend/src/assets/images/NebulaPanel-logo.svg" alt="NebulaPanel" width="300" /></a></p>
 <p align="center"><b>최고 평점의 웹 기반 리눅스 서버 관리 도구</b></p>
 <p align="center">
   <a href="https://trendshift.io/repositories/2462" target="_blank"><img src="https://trendshift.io/api/badge/repositories/2462" alt="NebulaPanel%2FNebulaPanel | Trendshift" style="width: 180px; height: auto;" /></a>
@@ -47,14 +47,13 @@ NebulaPanel은 리눅스 서버 관리를 위한 오픈 소스 현대 웹 기반
 아래 스크립트를 실행하고 프롬프트에 따라 NebulaPanel을 설치하세요:
 
 ```bash
-curl -sSL https://resource.NebulaPanel.pro/quick_start.sh -o quick_start.sh && bash quick_start.sh
+git clone https://github.com/AxionMC/NebulaPanel.git && cd NebulaPanel && sudo bash scripts/install.sh
 ```
 
-자세한 내용은 [문서](https://docs.NebulaPanel.pro/quick_start/)를 참조하세요.
+자세한 내용은 [문서](https://github.com/AxionMC/NebulaPanel)를 참조하세요.
 
 ## 스크린샷
 
-![UI 디스플레이](https://resource.NebulaPanel.pro/img/NebulaPanel.png)
 
 ## 스타 히스토리
 

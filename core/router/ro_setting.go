@@ -1,4 +1,4 @@
-﻿﻿package router
+﻿package router
 
 import (
 	v2 "github.com/NebulaPanel/nebulapanel/core/app/api/v2"
@@ -37,10 +37,12 @@ func (s *SettingRouter) InitRouter(Router *gin.RouterGroup) {
 		settingRouter.POST("/ssl/update", baseApi.UpdateSSL)
 		settingRouter.GET("/ssl/info", baseApi.LoadFromCert)
 		settingRouter.POST("/ssl/download", baseApi.DownloadSSL)
-		settingRouter.POST("/upgrade", baseApi.Upgrade)
-		settingRouter.POST("/upgrade/notes", baseApi.GetNotesByVersion)
-		settingRouter.GET("/upgrade/releases", baseApi.LoadRelease)
-		settingRouter.GET("/upgrade", baseApi.GetUpgradeInfo)
+		// NebulaPanel V1.0.0: 内置在线更新功能已移除，后期按计划评估是否重新加入
+		// settingRouter.POST("/upgrade", baseApi.Upgrade)
+		// settingRouter.POST("/upgrade/notes", baseApi.GetNotesByVersion)
+		// settingRouter.GET("/upgrade/releases", baseApi.LoadRelease)
+		// settingRouter.GET("/upgrade", baseApi.GetUpgradeInfo)
+		// 升级备份文件清理入口保留（历史备份仍需可清理）
 		settingRouter.POST("/apps/store/update", baseApi.UpdateAppstoreConfig)
 		settingRouter.GET("/apps/store/config", baseApi.GetAppstoreConfig)
 		settingRouter.GET("/memo", baseApi.GetMemo)

@@ -1,4 +1,4 @@
-﻿﻿<template>
+<template>
     <div>
         <LayoutContent v-loading="loading" :title="$t('setting.about')" :divider="true">
             <template #main>
@@ -14,9 +14,6 @@
                         <PrimaryLogo v-else />
                     </div>
                     <h3 class="description">{{ themeConfig.title || $t('setting.description') }}</h3>
-                    <div class="flex justify-center">
-                        <SystemUpgrade class="upgrade" />
-                    </div>
                     <div class="flex w-full justify-center my-5 flex-wrap md:flex-row gap-4">
                         <el-link @click="toDoc" class="system-link">
                             <el-icon><Document /></el-icon>
@@ -44,7 +41,6 @@
 <script lang="ts" setup>
 import { getSystemAvailable } from '@/api/modules/setting';
 import { onMounted, ref } from 'vue';
-import SystemUpgrade from '@/components/system-upgrade/index.vue';
 import { useGlobalStore } from '@/composables/useGlobalStore';
 import PrimaryLogo from '@/assets/images/NebulaPanel-logo.svg?component';
 const { docsUrl, themeConfig } = useGlobalStore();
@@ -55,13 +51,13 @@ const toDoc = () => {
     window.open(docsUrl.value.endsWith('/') ? docsUrl.value : `${docsUrl.value}/`, '_blank', 'noopener,noreferrer');
 };
 const toGithub = () => {
-    window.open('https://github.com/NebulaPanel/NebulaPanel', '_blank', 'noopener,noreferrer');
+    window.open('https://github.com/AxionMC/NebulaPanel', '_blank', 'noopener,noreferrer');
 };
 const toIssue = () => {
-    window.open('https://github.com/NebulaPanel/nebulapanel/issues', '_blank', 'noopener,noreferrer');
+    window.open('https://github.com/AxionMC/NebulaPanel/issues', '_blank', 'noopener,noreferrer');
 };
 const toGithubStar = () => {
-    window.open('https://github.com/NebulaPanel/NebulaPanel', '_blank', 'noopener,noreferrer');
+    window.open('https://github.com/AxionMC/NebulaPanel', '_blank', 'noopener,noreferrer');
 };
 
 onMounted(() => {

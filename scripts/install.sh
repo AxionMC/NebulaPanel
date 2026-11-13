@@ -4,8 +4,13 @@
 # 基于 1Panel 源码重构，支持 Debian / Ubuntu / CentOS / Rocky / AlmaLinux
 #
 # 用法：
-#   curl -fsSL https://resource.nebulapanel.pro/v2/quick_start.sh | bash
-#   或者本地：bash install.sh
+#   curl -fsSL https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/scripts/install.sh | bash
+#   或者本地：sudo bash scripts/install.sh
+#
+# 说明：
+#   - 全程交互式，可自定义安装目录、端口、安全入口、管理员账号与密码
+#   - 面板版本固定为 V1.0.0，内置在线更新功能已移除
+#   - 自动检测 Docker：已安装则跳过，未安装则自动安装
 #
 
 set -euo pipefail
@@ -92,7 +97,9 @@ install_deps() {
         apt-get install -y curl ca-certificates openssl wget tar sudo gnupg >/dev/null 2>&1 || true
     elif command -v yum >/dev/null 2>&1 || command -v dnf >/dev/null 2>&1; then
         local pkg_mgr="yum"
-        command -v dnf >/dev/null 2>&1 && pkg_mgr="dnf"
+        if command -v dnf >/dev/null 2>&1; then
+            pkg_mgr="dnf"
+        fi
         ${pkg_mgr} install -y curl ca-certificates openssl wget tar sudo gnupg >/dev/null 2>&1 || true
     else
         warn "未找到 apt-get/yum/dnf，将跳过依赖安装，请自行保证 curl/openssl 可用"
@@ -143,28 +150,56 @@ install_docker() {
 
 ###############################################################################
 # 下载 NebulaPanel 二进制（用于构建 Docker 镜像）
+# 优先从 GitHub Release 下载，失败则回退到源码本地构建产物
 ###############################################################################
 download_binaries() {
     info "下载 NebulaPanel 二进制文件（版本：${NP_VERSION}, 架构：${NP_ARCH}）..."
 
     mkdir -p "${NP_BUILD_DIR}"
 
-    local core_url="${NP_BINARY_URL}/NebulaPanel-core-${NP_ARCH}"
-    local agent_url="${NP_BINARY_URL}/NebulaPanel-agent-${NP_ARCH}"
+    local tarball="NebulaPanel-linux-${NP_ARCH}.tar.gz"
+    local pkg_url="${NP_REPO_URL}/${tarball}"
+    local pkg_tmp="${NP_BUILD_DIR}/${tarball}"
 
-    if ! curl -fsSL --connect-timeout 30 --max-time 300 -o "${NP_BUILD_DIR}/NebulaPanel-core" "${core_url}"; then
-        error "下载 NebulaPanel-core 失败：${core_url}"
+    info "下载地址：${pkg_url}"
+    if curl -fsSL --connect-timeout 30 --max-time 600 -o "${pkg_tmp}" "${pkg_url}"; then
+        tar -xzf "${pkg_tmp}" -C "${NP_BUILD_DIR}"
+        rm -f "${pkg_tmp}"
+        # Release 包内文件名为 NebulaPanel-core-<arch>，统一改名
+        if [ -f "${NP_BUILD_DIR}/NebulaPanel-core-${NP_ARCH}" ]; then
+            mv -f "${NP_BUILD_DIR}/NebulaPanel-core-${NP_ARCH}" "${NP_BUILD_DIR}/NebulaPanel-core"
+        fi
+        if [ -f "${NP_BUILD_DIR}/NebulaPanel-agent-${NP_ARCH}" ]; then
+            mv -f "${NP_BUILD_DIR}/NebulaPanel-agent-${NP_ARCH}" "${NP_BUILD_DIR}/NebulaPanel-agent"
+        fi
+    else
+        warn "从 Release 下载失败，尝试使用本地已构建的二进制"
+        local core_local="${NP_SRC_DIR}/build/NebulaPanel-core-${NP_ARCH}"
+        local agent_local="${NP_SRC_DIR}/build/NebulaPanel-agent-${NP_ARCH}"
+        if [ ! -f "${core_local}" ]; then
+            core_local="${NP_SRC_DIR}/build/NebulaPanel-core"
+        fi
+        if [ ! -f "${agent_local}" ]; then
+            agent_local="${NP_SRC_DIR}/build/NebulaPanel-agent"
+        fi
+
+        if [ -f "${core_local}" ] && [ -f "${agent_local}" ]; then
+            cp -f "${core_local}" "${NP_BUILD_DIR}/NebulaPanel-core"
+            cp -f "${agent_local}" "${NP_BUILD_DIR}/NebulaPanel-agent"
+        else
+            error "无法获取 NebulaPanel 二进制。请先在源码目录执行 make build_all，或检查 Release 是否已发布 ${NP_VERSION}"
+            exit 1
+        fi
+    fi
+
+    if [ ! -s "${NP_BUILD_DIR}/NebulaPanel-core" ] || [ ! -s "${NP_BUILD_DIR}/NebulaPanel-agent" ]; then
+        error "二进制文件缺失或为空，安装中止"
         exit 1
     fi
-    chmod 755 "${NP_BUILD_DIR}/NebulaPanel-core"
 
-    if ! curl -fsSL --connect-timeout 30 --max-time 300 -o "${NP_BUILD_DIR}/NebulaPanel-agent" "${agent_url}"; then
-        error "下载 NebulaPanel-agent 失败：${agent_url}"
-        exit 1
-    fi
-    chmod 755 "${NP_BUILD_DIR}/NebulaPanel-agent"
+    chmod 755 "${NP_BUILD_DIR}/NebulaPanel-core" "${NP_BUILD_DIR}/NebulaPanel-agent"
 
-    ok "二进制文件下载完成"
+    ok "二进制文件准备完成"
 }
 
 ###############################################################################
@@ -223,11 +258,10 @@ version: "3.8"
 services:
   nebulapanel-core:
     build:
-      context: ${NP_BUILD_DIR}
+      context: ${NP_DOCKER_DIR}
       dockerfile: ${NP_DOCKER_DIR}/Dockerfile.core
     container_name: nebulapanel-core
-    ports:
-      - "${NP_PORT}:9999"
+    # 使用 host 网络，面板直接监听 conn.port（默认 ${NP_PORT}），无需端口映射
     volumes:
       - ${NP_CONF_DIR}:/opt/NebulaPanel/conf
       - ${NP_DB_DIR}:/opt/NebulaPanel/db
@@ -241,7 +275,7 @@ services:
 
   nebulapanel-agent:
     build:
-      context: ${NP_BUILD_DIR}
+      context: ${NP_DOCKER_DIR}
       dockerfile: ${NP_DOCKER_DIR}/Dockerfile.agent
     container_name: nebulapanel-agent
     volumes:
@@ -270,22 +304,29 @@ build_and_start() {
     write_dockerfile_agent
     write_docker_compose
 
-    # 生成 conf/app.yaml（生产模式配置）
+    # 生成 conf/app.yaml（与 core/global/config.go 结构严格对应）
     cat > "${NP_CONF_DIR}/app.yaml" <<EOF
 base:
-  install_dir: ${NP_INSTALL_DIR}
   mode: stable
+  username: ${NP_USERNAME}
+  password: ${NP_PASSWORD}
+  language: ${NP_LANGUAGE}
   is_demo: false
   is_offline: false
   is_enterprise: false
-  port: ${NP_PORT}
-  username: ${NP_USERNAME}
-  password: ${NP_PASSWORD}
   version: ${NP_VERSION}
+  install_dir: ${NP_INSTALL_DIR}
+
+conn:
+  port: ${NP_PORT}
+  bindAddress: 0.0.0.0
+  ipv6: disable
+  ssl: disable
+  entrance: ${NP_ENTRANCE}
 
 log:
   level: info
-  time_zone: Asia/Shanghai
+  timeZone: Asia/Shanghai
   log_name: NebulaPanel-Core
   log_suffix: .log
   max_backup: 10
@@ -319,6 +360,7 @@ set -euo pipefail
 NP_PORT="${NP_PORT}"
 NP_ENTRANCE="${NP_ENTRANCE}"
 NP_HOME="${NP_HOME}"
+NP_VERSION="${NP_VERSION}"
 
 cmd=\${1:-help}
 case \$cmd in
@@ -326,12 +368,15 @@ case \$cmd in
     stop)   docker compose -f "\${NP_HOME}/docker/docker-compose.yml" stop ;;
     restart) docker compose -f "\${NP_HOME}/docker/docker-compose.yml" restart ;;
     status) docker compose -f "\${NP_HOME}/docker/docker-compose.yml" ps ;;
+    logs)   docker compose -f "\${NP_HOME}/docker/docker-compose.yml" logs -f --tail=200 ;;
     user-info)
         echo "访问地址：http://\$(hostname -I | awk '{print \$1}'):\${NP_PORT}/\${NP_ENTRANCE}"
         echo "账号：${NP_USERNAME}"
         echo "密码：${NP_PASSWORD}"
+        echo "版本：\${NP_VERSION}"
         ;;
-    *) echo "用法：npctl {start|stop|restart|status|user-info}" ;;
+    version) echo "NebulaPanel \${NP_VERSION}" ;;
+    *) echo "用法：npctl {start|stop|restart|status|logs|user-info|version}" ;;
 esac
 EOF
     chmod 755 /usr/local/bin/npctl
@@ -377,18 +422,36 @@ EOF
 ###############################################################################
 wait_and_print_result() {
     local waited=0
+    local ready="no"
     while [ "${waited}" -lt 60 ]; do
         if command -v ss >/dev/null 2>&1; then
-            ss -ltn | grep -q ":${NP_PORT} " && break
+            if ss -ltn 2>/dev/null | grep -q ":${NP_PORT} "; then
+                ready="yes"
+                break
+            fi
         elif command -v netstat >/dev/null 2>&1; then
-            netstat -ltn | grep -q ":${NP_PORT} " && break
+            if netstat -ltn 2>/dev/null | grep -q ":${NP_PORT} "; then
+                ready="yes"
+                break
+            fi
+        else
+            # 无 ss/netstat 时直接跳过等待
+            ready="unknown"
+            break
         fi
         sleep 2
         waited=$((waited + 2))
     done
 
+    if [ "${ready}" = "no" ]; then
+        warn "等待端口 ${NP_PORT} 超时，容器可能仍在启动，请稍后用 npctl status 检查"
+    fi
+
     local local_ip
     local_ip="$(hostname -I 2>/dev/null | awk '{print $1}' || echo '127.0.0.1')"
+    if [ -z "${local_ip}" ]; then
+        local_ip="127.0.0.1"
+    fi
 
     echo ""
     echo "========================================================================"
@@ -420,9 +483,6 @@ interactive_config() {
     echo "========================================================================"
     echo ""
 
-    # 版本
-    read_input "请输入 NebulaPanel 版本" "v2.0.0" NP_VERSION
-
     # 安装目录
     read_input "请输入安装目录" "/opt" NP_INSTALL_DIR
 
@@ -441,8 +501,12 @@ interactive_config() {
     # 语言
     read_input "请输入界面语言（zh/en）" "zh" NP_LANGUAGE
 
-    # 仓库地址
-    read_input "请输入资源仓库地址" "https://resource.nebulapanel.pro/v2" NP_REPO_URL
+    # 版本已硬编码（内置在线更新已移除，后期按计划评估）
+    NP_VERSION="V1.0.0"
+
+    # Release 下载地址已固定（GitHub Releases）
+    NP_RELEASE_BASE="https://github.com/AxionMC/NebulaPanel/releases/download"
+    NP_REPO_URL="${NP_RELEASE_BASE}/${NP_VERSION}"
 
     echo ""
     ok "配置读取完成，开始安装..."
@@ -459,8 +523,8 @@ main() {
     install_deps
     detect_docker
 
-    # 根据用户配置构建下载地址
-    NP_BINARY_URL="${NP_REPO_URL}/package/v2/${NP_VERSION}/linux"
+    # 源码目录（脚本所在仓库根目录，用于回退本地构建产物）
+    NP_SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
     NP_HOME="${NP_INSTALL_DIR}/NebulaPanel"
     NP_CONF_DIR="${NP_HOME}/conf"
     NP_DB_DIR="${NP_HOME}/db"

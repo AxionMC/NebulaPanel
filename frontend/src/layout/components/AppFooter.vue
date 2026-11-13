@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="footer" :class="{ 'footer--mobile': isMobile }">
         <div class="footer-content">
             <div class="footer-copyright">
@@ -10,13 +10,11 @@
                 </a>
             </div>
             <FooterNavigation class="footer-navigation-panel" />
-            <SystemUpgrade class="footer-upgrade" />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import SystemUpgrade from '@/components/system-upgrade/index.vue';
 import FooterNavigation from '@/components/footer-navigation/index.vue';
 import { useGlobalStore } from '@/composables/useGlobalStore';
 
@@ -72,10 +70,6 @@ const year = new Date().getFullYear();
 .footer-navigation-panel {
     order: -1;
     flex-basis: 100%;
-}
-
-.footer-upgrade {
-    white-space: nowrap;
 }
 
 @media (min-width: 768px) {

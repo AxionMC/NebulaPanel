@@ -2,10 +2,14 @@
 
 NebulaPanel 基于 1Panel 源码重构而成，采用 **Go (Gin) + Vue 3 + Element Plus** 技术栈。
 
+- 版本：**V1.0.0**
 - 后端：`core/`（面板核心）、`agent/`（节点代理）
 - 前端：`frontend/`
-- 安装脚本：`scripts/install.sh`
+- 安装脚本：`scripts/install.sh`（全程交互式 Docker 部署）
 - 管理 CLI：`scripts/npctl`
+- 自动构建：`.github/workflows/build.yml`
+
+> 说明：面板内置的在线更新（升级）功能已在 V1.0.0 中移除，后期按计划评估是否重新加入。当前版本更新方式为重新拉取源码/镜像后重新安装。
 
 ## 一、前置条件
 
@@ -14,13 +18,14 @@ NebulaPanel 基于 1Panel 源码重构而成，采用 **Go (Gin) + Vue 3 + Eleme
 | Go | 1.27.3+ |
 | Node.js | 18+ / 20+ |
 | pnpm / npm | 任意 |
+| Docker | 20.10+（仅部署需要） |
 | upx（可选）| 用于二进制压缩 |
 
 ## 二、获取源码
 
 ```bash
-git clone https://github.com/NebulaPanel/nebulapanel.git
-cd nebulapanel
+git clone https://github.com/AxionMC/NebulaPanel.git
+cd NebulaPanel
 ```
 
 ## 三、前端构建
@@ -31,7 +36,7 @@ npm install   # 或 pnpm install
 npm run build:pro   # 生产构建
 ```
 
-构建产物会输出到 `frontend/dist`，并在打包后由后端通过 `embed` 内嵌进 `core/cmd/server/web/assets`。
+构建产物直接输出到 `core/cmd/server/web`（见 `frontend/vite.config.ts` 的 `build.outDir`），随后由后端通过 `embed` 内嵌进 `NebulaPanel-core`。
 
 ## 四、后端构建（Linux）
 
@@ -45,6 +50,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags '-s -w' \
 
 # 构建 NebulaPanel-agent（节点代理）
 cd ../agent
+go mod tidy   # lego 模块已替换为 github.com/AxionMC/lego，首次构建需校验哈希
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags '-s -w' \
   -o ../build/NebulaPanel-agent ./cmd/server/main.go
 ```
@@ -59,154 +65,189 @@ make build_all
 - `build/NebulaPanel-core`
 - `build/NebulaPanel-agent`
 
-## 五、安装部署
+ARM64 构建只需把 `GOARCH=amd64` 换成 `GOARCH=arm64`。
+
+## 五、GitHub Actions 自动构建
+
+仓库已内置 `.github/workflows/build.yml`，触发条件：
+
+| 触发方式 | 说明 |
+|----------|------|
+| push 到 `main` | 构建前端 + 后端 amd64/arm64，产物作为 Artifact 保留 7 天 |
+| push tag `v*` / `V*` | 额外构建 Docker 镜像推送 GHCR，并自动发布 GitHub Release |
+| Pull Request | 仅构建校验，不发布 |
+| 手动 workflow_dispatch | 可指定版本号，构建并发布镜像 |
+
+产物命名：
+
+- `NebulaPanel-linux-amd64.tar.gz`
+- `NebulaPanel-linux-arm64.tar.gz`
+
+每个压缩包内含 `NebulaPanel-core-<arch>` 与 `NebulaPanel-agent-<arch>`，并附带 `.sha256` 校验文件。
+
+发布新版本只需：
+
+```bash
+git tag V1.0.0
+git push origin V1.0.0
+```
+
+## 六、安装部署
 
 ### 方式一：一键安装脚本（推荐）
 
 在目标 Linux 服务器上以 root 运行：
 
 ```bash
-curl -fsSL https://resource.nebulapanel.pro/v2/quick_start.sh | bash
-```
-
-或本地运行：
-
-```bash
+git clone https://github.com/AxionMC/NebulaPanel.git
+cd NebulaPanel
 sudo bash scripts/install.sh
 ```
 
-安装脚本会完成以下工作：
+或直接远程执行：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/scripts/install.sh | bash
+```
+
+脚本为**全程交互式**，依次询问：
+
+1. 安装目录（默认 `/opt`）
+2. 面板访问端口（默认 `9999`）
+3. 安全入口路径（默认 `nebula`）
+4. 管理员账号（默认 `admin`）
+5. 管理员密码（默认 `admin123`）
+6. 界面语言（默认 `zh`）
+
+版本固定为 `V1.0.0`，二进制从 GitHub Release 下载；若 Release 不存在则回退使用本地 `build/` 下的构建产物。
+
+脚本其余工作：
+
 1. 检测操作系统与架构（amd64 / arm64）
 2. 安装系统依赖（curl, openssl, tar 等）
-3. 下载 NebulaPanel-core / NebulaPanel-agent / npctl 二进制
-4. 生成 `/usr/local/bin/npctl` 配置文件
+3. 检测 Docker：已安装则跳过，未安装则自动安装
+4. 生成 `Dockerfile.core`、`Dockerfile.agent`、`docker-compose.yml`
 5. 生成 `/opt/NebulaPanel/conf/app.yaml`
-6. 创建 systemd 服务单元 `nebulapanel-core.service`、`nebulapanel-agent.service`
-7. 启动服务并设置开机自启
+6. 构建镜像并 `docker compose up -d`
+7. 生成 `/usr/local/bin/npctl` 管理命令
+8. 交互式询问是否替换 Docker 镜像源为 `hub.002230.xyz:44300`
 
-安装完成后访问：`http://<服务器IP>:9999/nebula`
+安装完成后访问：`http://<服务器IP>:<端口>/<安全入口>`
 
-### 方式二：手动部署
+### 方式二：手动 Docker 部署
 
 ```bash
 # 1. 创建目录
-sudo mkdir -p /opt/NebulaPanel/{conf,db,secret,logs,backup,geo,tmp}
-sudo mkdir -p /usr/local/bin
+sudo mkdir -p /opt/NebulaPanel/{conf,db,secret,logs,backup,geo,tmp,docker}
 
-# 2. 拷贝二进制
-sudo cp build/NebulaPanel-core /usr/local/bin/
-sudo cp build/NebulaPanel-agent /usr/local/bin/
-sudo cp scripts/npctl /usr/local/bin/npctl
-sudo chmod 755 /usr/local/bin/NebulaPanel-core /usr/local/bin/NebulaPanel-agent /usr/local/bin/npctl
-
-# 3. 生成 npctl 配置（以端口 9999 为例）
-cat > /usr/local/bin/npctl <<'EOF'
-BASE_DIR="/opt"
-ORIGINAL_PORT="9999"
-ORIGINAL_VERSION="v2.0.0"
-ORIGINAL_USERNAME="admin"
-ORIGINAL_PASSWORD="admin123"
-ORIGINAL_ENTRANCE="nebula"
-LANGUAGE="zh"
-CHANGE_USER_INFO=""
-PANEL_EDITION="cn"
-EOF
-
-# 4. 生成 conf/app.yaml
-cat > /opt/NebulaPanel/conf/app.yaml <<'EOF'
-base:
-  install_dir: /opt
-  mode: stable
-  is_demo: false
-  is_offline: false
-  is_enterprise: false
-  port: 9999
-  username: admin
-  password: admin123
-  version: v2.0.0
-
-log:
-  level: info
-  time_zone: Asia/Shanghai
-  log_name: NebulaPanel-Core
-  log_suffix: .log
-  max_backup: 10
-EOF
-
-# 5. 生成 systemd 单元并启动
-sudo tee /etc/systemd/system/nebulapanel-core.service >/dev/null <<EOF
-[Unit]
-Description=NebulaPanel Core Service
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/NebulaPanel-core start
-Restart=always
-RestartSec=5
-WorkingDirectory=/opt/NebulaPanel
-LimitNOFILE=65535
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo tee /etc/systemd/system/nebulapanel-agent.service >/dev/null <<EOF
-[Unit]
-Description=NebulaPanel Agent Service
-After=network.target nebulapanel-core.service
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/NebulaPanel-agent start
-Restart=always
-RestartSec=5
-WorkingDirectory=/opt/NebulaPanel
-LimitNOFILE=65535
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl enable --now nebulapanel-core.service nebulapanel-agent.service
+# 2. 放置二进制到构建上下文
+sudo cp build/NebulaPanel-core build/NebulaPanel-agent /opt/NebulaPanel/docker/
 ```
 
-## 六、npctl 常用命令
+`/opt/NebulaPanel/docker/Dockerfile.core`：
+
+```dockerfile
+FROM debian:bookworm-slim
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates tzdata \
+    && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /opt/NebulaPanel/{conf,db,secret,logs,backup,geo,tmp}
+WORKDIR /opt/NebulaPanel
+COPY NebulaPanel-core /usr/local/bin/NebulaPanel-core
+RUN chmod +x /usr/local/bin/NebulaPanel-core
+EXPOSE 9999
+ENTRYPOINT ["NebulaPanel-core", "start"]
+```
+
+`/opt/NebulaPanel/docker/Dockerfile.agent`：
+
+```dockerfile
+FROM debian:bookworm-slim
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates tzdata \
+    && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /opt/NebulaPanel/{conf,db,secret,logs,backup,geo,tmp}
+WORKDIR /opt/NebulaPanel
+COPY NebulaPanel-agent /usr/local/bin/NebulaPanel-agent
+RUN chmod +x /usr/local/bin/NebulaPanel-agent
+ENTRYPOINT ["NebulaPanel-agent", "start"]
+```
+
+`/opt/NebulaPanel/docker/docker-compose.yml`：
+
+```yaml
+services:
+  nebulapanel-core:
+    build:
+      context: /opt/NebulaPanel/docker
+      dockerfile: /opt/NebulaPanel/docker/Dockerfile.core
+    container_name: nebulapanel-core
+    ports:
+      - "9999:9999"
+    volumes:
+      - /opt/NebulaPanel/conf:/opt/NebulaPanel/conf
+      - /opt/NebulaPanel/db:/opt/NebulaPanel/db
+      - /opt/NebulaPanel/secret:/opt/NebulaPanel/secret
+      - /opt/NebulaPanel/logs:/opt/NebulaPanel/logs
+      - /opt/NebulaPanel/backup:/opt/NebulaPanel/backup
+      - /opt/NebulaPanel/geo:/opt/NebulaPanel/geo
+      - /opt/NebulaPanel/tmp:/opt/NebulaPanel/tmp
+    restart: always
+    network_mode: host
+
+  nebulapanel-agent:
+    build:
+      context: /opt/NebulaPanel/docker
+      dockerfile: /opt/NebulaPanel/docker/Dockerfile.agent
+    container_name: nebulapanel-agent
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/NebulaPanel:/opt/NebulaPanel
+    restart: always
+    network_mode: host
+```
+
+启动：
+
+```bash
+cd /opt/NebulaPanel/docker
+docker compose up -d --build
+```
+
+### 方式三：GHCR 镜像部署
+
+```bash
+docker pull ghcr.io/axionmc/nebulapanel:V1.0.0
+docker run -d --name nebulapanel-core \
+  --network host --restart always \
+  -v /opt/NebulaPanel:/opt/NebulaPanel \
+  ghcr.io/axionmc/nebulapanel:V1.0.0
+```
+
+## 七、npctl 常用命令
 
 ```bash
 # 查看服务状态
-npctl status all
+npctl status
 
-# 重启核心服务
-npctl restart core
+# 启动 / 停止 / 重启
+npctl start
+npctl stop
+npctl restart
 
-# 重启代理服务
-npctl restart agent
+# 查看实时日志
+npctl logs
 
-# 修改面板端口
-npctl update port 8080
-
-# 修改管理员密码
-npctl update password
-
-# 修改管理员账号
-npctl update username
-
-# 查看访问信息（地址、账号、密码）
+# 查看访问信息（地址、账号、密码、版本）
 npctl user-info
-
-# 重置安全入口
-npctl reset entrance
 
 # 查看版本
 npctl version
-
-# 查看帮助
-npctl help
 ```
 
-## 七、目录结构说明
+源码目录下的完整版 `scripts/npctl` 还支持 systemd 模式的 `update port`、`update password`、`reset entrance`、`reset mfa` 等高级操作。
+
+## 八、目录结构说明
 
 ```
 /opt/NebulaPanel/
@@ -217,28 +258,33 @@ npctl help
 ├── logs/                 # 运行日志
 ├── backup/               # 本地备份目录
 ├── geo/                  # GeoIP 数据库
-└── tmp/                  # 升级/回滚临时目录
+├── docker/               # Dockerfile 与 docker-compose.yml
+├── tmp/                  # 临时目录
+└── .build/               # 安装期二进制缓存
 ```
 
-## 八、升级
+## 九、版本更新
+
+内置在线更新已移除。更新方式：
 
 ```bash
-npctl update version v2.x.x   # 升级到指定版本
+cd NebulaPanel
+git pull
+git checkout V1.0.0        # 或目标版本 tag
+sudo bash scripts/install.sh   # 重新执行安装，会复用已有配置目录
 ```
 
-升级过程会自动备份数据库，并在失败时支持 `npctl restore` 回滚。
+数据库与配置位于 `/opt/NebulaPanel`，重新安装不会清空。
 
-## 九、卸载
+## 十、卸载
 
 ```bash
-sudo systemctl stop nebulapanel-core.service nebulapanel-agent.service
-sudo systemctl disable nebulapanel-core.service nebulapanel-agent.service
-sudo rm -rf /etc/systemd/system/nebulapanel-*.service
-sudo rm -rf /usr/local/bin/NebulaPanel-core /usr/local/bin/NebulaPanel-agent /usr/local/bin/npctl
-sudo rm -rf /opt/NebulaPanel
-sudo systemctl daemon-reload
+cd /opt/NebulaPanel/docker
+docker compose down
+docker rmi nebulapanel-core nebulapanel-agent 2>/dev/null || true
+sudo rm -rf /opt/NebulaPanel /usr/local/bin/npctl
 ```
 
-## 十、License
+## 十一、License
 
-GNU General Public License v3.0
+Apache License 2.0

@@ -1,4 +1,4 @@
-﻿# Binaries for programs and plugins
+# Binaries for programs and plugins
 *.exe
 *.exe~
 *.dll
@@ -62,7 +62,7 @@ core/utils/xpack/enterprise.go
 dist/
 npctl
 NebulaPanel.service
-install.sh
+/install.sh
 quick_start.sh
 cmd/server/fileList.txt
 .fileList.txt
