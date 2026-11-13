@@ -60,10 +60,10 @@ core/utils/xpack/enterprise.go
 
 .history/
 dist/
-npctl
+/npctl
 NebulaPanel.service
 /install.sh
-quick_start.sh
+/quick_start.sh
 cmd/server/fileList.txt
 .fileList.txt
 NebulaPanel.code-workspace
