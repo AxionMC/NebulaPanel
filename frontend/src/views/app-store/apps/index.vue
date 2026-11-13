@@ -32,8 +32,9 @@
             </template>
             <template #main>
                 <div>
-                    <el-alert type="warning" :title="$t('app.storeSourceTitle')" :closable="false" show-icon />
-                    <el-alert type="info" :title="$t('app.appHelper')" :closable="false" />
+                    <MainDiv :heightDiff="300">
+                        <el-alert type="warning" :title="$t('app.storeSourceTitle')" :closable="false" show-icon />
+                        <el-alert type="info" :title="$t('app.appHelper')" :closable="false" />
                         <el-row :gutter="5" v-if="apps.length > 0">
                             <el-col
                                 class="app-col-12"
