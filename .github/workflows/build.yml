@@ -300,8 +300,9 @@ jobs:
           file build/* || true
           ls -lh build
           # 交叉编译产物必须是目标架构的 ELF
-          "${{ github.workspace }}/scripts/check-elf.sh" "build/${CORE_NAME}-${{ matrix.goarch }}" "${{ matrix.goarch }}"
-          "${{ github.workspace }}/scripts/check-elf.sh" "build/${AGENT_NAME}-${{ matrix.goarch }}" "${{ matrix.goarch }}"
+          # 用 bash 显式调用，避免依赖文件的可执行位
+          bash scripts/check-elf.sh "build/${CORE_NAME}-${{ matrix.goarch }}"  "${{ matrix.goarch }}"
+          bash scripts/check-elf.sh "build/${AGENT_NAME}-${{ matrix.goarch }}" "${{ matrix.goarch }}"
 
       - name: Package binaries
         shell: bash
