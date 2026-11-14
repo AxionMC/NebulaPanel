@@ -1,4 +1,4 @@
-﻿﻿package cmd
+package cmd
 
 import (
 	"github.com/NebulaPanel/nebulapanel/agent/server"

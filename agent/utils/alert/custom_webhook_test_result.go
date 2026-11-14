@@ -1,4 +1,4 @@
-﻿﻿package alert
+package alert
 
 import (
 	"github.com/NebulaPanel/nebulapanel/agent/app/dto"

@@ -1,4 +1,4 @@
-﻿﻿package ufw
+package ufw
 
 import (
 	"context"

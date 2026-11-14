@@ -1,4 +1,4 @@
-﻿﻿package router
+package router
 
 import (
 	"crypto/sha256"

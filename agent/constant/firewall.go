@@ -1,4 +1,4 @@
-﻿package constant
+package constant
 
 const (
 	FirewallProviderFirewalld   = "firewalld"

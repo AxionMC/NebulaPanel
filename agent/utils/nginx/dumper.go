@@ -1,4 +1,4 @@
-﻿﻿package nginx
+package nginx
 
 import (
 	"bytes"

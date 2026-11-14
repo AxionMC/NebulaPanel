@@ -1,4 +1,4 @@
-﻿﻿package psession
+package psession
 
 import (
 	"crypto/rand"

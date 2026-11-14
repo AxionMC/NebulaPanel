@@ -1,4 +1,4 @@
-﻿﻿package service
+package service
 
 import (
 	"github.com/NebulaPanel/nebulapanel/agent/app/dto/request"

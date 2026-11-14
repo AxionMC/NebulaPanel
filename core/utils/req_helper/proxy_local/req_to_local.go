@@ -1,4 +1,4 @@
-﻿﻿package proxy_local
+package proxy_local
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-﻿﻿package alert_config
+package alert_config
 
 import (
 	"bytes"

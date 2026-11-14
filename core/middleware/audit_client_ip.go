@@ -1,4 +1,4 @@
-﻿﻿package middleware
+package middleware
 
 import (
 	"github.com/NebulaPanel/nebulapanel/core/app/repo"

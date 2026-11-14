@@ -1,4 +1,4 @@
-﻿﻿package request
+package request
 
 import "github.com/NebulaPanel/nebulapanel/agent/app/dto"
 

@@ -1,4 +1,4 @@
-﻿﻿package iptables_helper
+package iptables_helper
 
 import (
 	"context"

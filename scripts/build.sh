@@ -380,11 +380,28 @@ build_core() {
     cd "${REPO_ROOT}/core" || die "找不到 core 目录"
     rm -f "${BUILD_DIR}/${CORE_NAME}-${TARGET_ARCH}"
 
-    # 注意：不给 core 跑 go mod tidy —— core 内存在 //go:build xpack 的源文件
-    # 引用了未随 OSS 源码发布的企业包，tidy 会因这些文件解析失败。
-    # 用 -mod=mod 让 go 在构建时按当前构建约束自动补齐 go.sum。
+    # embed 依赖的前端产物必须存在，否则 go:embed 直接失败
+    local web="${REPO_ROOT}/core/cmd/server/web"
+    local missing=""
+    for f in index.html favicon.png web.go; do
+        [ -f "${web}/${f}" ] || missing="${missing} ${f}"
+    done
+    [ -d "${web}/static" ] || missing="${missing} static/"
+    [ -d "${web}/assets" ] || missing="${missing} assets/"
+    if [ -n "${missing}" ]; then
+        err "core 的 go:embed 目标缺失：${missing}"
+        err "请先构建前端（不要用 --skip-frontend），或手动放置 ${web}/index.html 与 assets/"
+        cd "${REPO_ROOT}" || true
+        return 1
+    fi
+
+    go mod download >>"${LOG_FILE}" 2>&1 || warn "go mod download 返回非 0，继续尝试构建"
+
+    # 注意：构建「包目录」./cmd/server，而不是单文件 ./cmd/server/main.go。
+    # 传单个 .go 文件时 go 会按 command-line-arguments 处理，
+    # 在部分环境下会报 cannot find package。
     if go build -mod=mod -trimpath -ldflags '-s -w' \
-        -o "${BUILD_DIR}/${CORE_NAME}-${TARGET_ARCH}" ./cmd/server/main.go; then
+        -o "${BUILD_DIR}/${CORE_NAME}-${TARGET_ARCH}" ./cmd/server; then
         ok "${CORE_NAME} 编译完成"
     else
         err "${CORE_NAME} 编译失败，下面是完整诊断信息："
@@ -406,7 +423,7 @@ build_agent() {
     fi
 
     if go build -mod=mod -trimpath -ldflags '-s -w' \
-        -o "${BUILD_DIR}/${AGENT_NAME}-${TARGET_ARCH}" ./cmd/server/main.go; then
+        -o "${BUILD_DIR}/${AGENT_NAME}-${TARGET_ARCH}" ./cmd/server; then
         ok "${AGENT_NAME} 编译完成"
     else
         err "${AGENT_NAME} 编译失败，下面是完整诊断信息："
@@ -424,8 +441,8 @@ diag_core() {
     echo "----------------- core 诊断开始 -----------------"
     ( cd "${REPO_ROOT}/core" && {
         echo "\$ go version";        go version
-        echo "\$ go env GOOS GOARCH CGO_ENABLED GOPROXY GOMOD GOWORK"
-        go env GOOS GOARCH CGO_ENABLED GOPROXY GOMOD GOWORK
+        echo "\$ go env GOOS GOARCH GO111MODULE GOFLAGS GOTOOLCHAIN GOPROXY GOMOD GOWORK"
+        go env GOOS GOARCH GO111MODULE GOFLAGS GOTOOLCHAIN GOPROXY GOMOD GOWORK
         echo
         echo "\$ head -10 go.mod";   head -10 go.mod
         echo
@@ -436,9 +453,10 @@ diag_core() {
         echo
         echo "\$ go list ./cmd/server/cmd"; go list ./cmd/server/cmd 2>&1 | head -40
         echo "\$ go list ./cmd/server/docs"; go list ./cmd/server/docs 2>&1 | head -40
+        echo "\$ go list ./cmd/server"; go list ./cmd/server 2>&1 | head -40
         echo
-        echo "\$ go build ./cmd/server/main.go（完整输出）"
-        go build -mod=mod -o /dev/null ./cmd/server/main.go 2>&1 | head -80
+        echo "\$ go build ./cmd/server（完整输出）"
+        go build -mod=mod -o /dev/null ./cmd/server 2>&1 | head -120
     } )
     echo "----------------- core 诊断结束 -----------------"
 }
@@ -449,8 +467,8 @@ diag_agent() {
         echo "\$ go version";  go version
         echo "\$ head -12 go.mod"; head -12 go.mod
         echo "\$ grep lego go.mod go.sum"; grep -n lego go.mod go.sum || true
-        echo "\$ go build ./cmd/server/main.go（完整输出）"
-        go build -mod=mod -o /dev/null ./cmd/server/main.go 2>&1 | head -80
+        echo "\$ go build ./cmd/server（完整输出）"
+        go build -mod=mod -o /dev/null ./cmd/server 2>&1 | head -120
     } )
     echo "----------------- agent 诊断结束 -----------------"
 }
@@ -468,6 +486,11 @@ package_all() {
     [ -f "${agent}" ] || die "缺少 ${agent}"
 
     chmod 755 "${core}" "${agent}"
+
+    # 交叉编译产物必须是目标架构的 Linux ELF
+    log "校验 ELF 架构..."
+    bash "${REPO_ROOT}/scripts/check-elf.sh" "${core}"  "${TARGET_ARCH}" || die "${core} 架构校验失败"
+    bash "${REPO_ROOT}/scripts/check-elf.sh" "${agent}" "${TARGET_ARCH}" || die "${agent} 架构校验失败"
 
     local tgz="NebulaPanel-linux-${TARGET_ARCH}.tar.gz"
     rm -f "${tgz}" "${tgz}.sha256"
@@ -494,6 +517,18 @@ main() {
 
     log "仓库根目录：${REPO_ROOT}"
     log "系统：${OS_ID} ${OS_VER} / 主机架构：${HOST_ARCH} / 目标架构：${TARGET_ARCH}"
+
+    # BOM / 换行符预检（与 CI 的 preflight 保持一致）
+    if [ -f "${REPO_ROOT}/scripts/check-bom.sh" ]; then
+        if bash "${REPO_ROOT}/scripts/check-bom.sh" >>"${LOG_FILE}" 2>&1; then
+            ok "BOM 预检通过"
+        else
+            warn "检测到带 BOM 的文件，自动剥离..."
+            bash "${REPO_ROOT}/scripts/check-bom.sh" --fix >>"${LOG_FILE}" 2>&1 \
+                || die "BOM 自动剥离失败，详见 ${LOG_FILE}"
+            ok "BOM 已修复"
+        fi
+    fi
 
     install_base_deps
     choose_mirror

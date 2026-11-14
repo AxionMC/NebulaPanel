@@ -1,4 +1,4 @@
-﻿﻿package providers
+package providers
 
 import (
 	"github.com/NebulaPanel/nebulapanel/core/app/dto"

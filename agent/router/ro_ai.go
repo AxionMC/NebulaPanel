@@ -1,4 +1,4 @@
-﻿﻿package router
+package router
 
 import (
 	v1 "github.com/NebulaPanel/nebulapanel/agent/app/api/v2"

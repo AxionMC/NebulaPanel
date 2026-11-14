@@ -1,4 +1,4 @@
-﻿﻿package alert_push
+package alert_push
 
 import (
 	"strconv"

@@ -1,4 +1,4 @@
-﻿﻿package buserr
+package buserr
 
 import (
 	"github.com/NebulaPanel/nebulapanel/agent/i18n"

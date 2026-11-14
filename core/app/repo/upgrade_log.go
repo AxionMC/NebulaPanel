@@ -1,4 +1,4 @@
-﻿﻿package repo
+package repo
 
 import (
 	"github.com/NebulaPanel/nebulapanel/core/app/model"

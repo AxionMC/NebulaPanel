@@ -1,4 +1,4 @@
-﻿﻿package compose
+package compose
 
 import (
 	"encoding/json"

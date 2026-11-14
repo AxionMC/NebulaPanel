@@ -1,4 +1,4 @@
-﻿﻿package dir
+package dir
 
 import (
 	"path"

@@ -1,4 +1,4 @@
-﻿﻿package aihttp
+package aihttp
 
 import (
 	"encoding/json"

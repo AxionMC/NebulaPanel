@@ -1,4 +1,4 @@
-﻿﻿package npu
+package npu
 
 import (
 	"context"

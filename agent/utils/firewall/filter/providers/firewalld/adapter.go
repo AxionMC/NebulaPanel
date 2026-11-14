@@ -1,4 +1,4 @@
-﻿﻿package firewalld
+package firewalld
 
 import (
 	"context"

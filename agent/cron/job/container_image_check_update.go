@@ -1,4 +1,4 @@
-﻿﻿package job
+package job
 
 import (
 	"github.com/NebulaPanel/nebulapanel/agent/app/service"

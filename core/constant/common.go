@@ -1,4 +1,4 @@
-﻿package constant
+package constant
 
 import "sync/atomic"
 

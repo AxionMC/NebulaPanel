@@ -1,4 +1,4 @@
-﻿﻿package terminal_session
+package terminal_session
 
 import (
 	"errors"

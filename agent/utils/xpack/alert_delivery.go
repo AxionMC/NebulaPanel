@@ -1,4 +1,4 @@
-﻿﻿package xpack
+package xpack
 
 import (
 	"fmt"

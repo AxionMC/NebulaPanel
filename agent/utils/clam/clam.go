@@ -1,4 +1,4 @@
-﻿﻿package clam
+package clam
 
 import (
 	"fmt"

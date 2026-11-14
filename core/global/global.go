@@ -1,4 +1,4 @@
-﻿package global
+package global
 
 import (
 	"github.com/NebulaPanel/nebulapanel/core/init/auth"

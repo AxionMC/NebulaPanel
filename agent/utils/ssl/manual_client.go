@@ -1,4 +1,4 @@
-﻿﻿package ssl
+package ssl
 
 import (
 	"context"

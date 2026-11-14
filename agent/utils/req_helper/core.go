@@ -1,4 +1,4 @@
-﻿﻿package req_helper
+package req_helper
 
 import (
 	"bytes"

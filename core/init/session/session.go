@@ -1,4 +1,4 @@
-﻿﻿package session
+package session
 
 import (
 	"github.com/NebulaPanel/nebulapanel/core/global"

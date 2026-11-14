@@ -1,4 +1,4 @@
-﻿﻿package migrations
+package migrations
 
 import (
 	"github.com/NebulaPanel/nebulapanel/core/app/model"

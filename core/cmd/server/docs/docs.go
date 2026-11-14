@@ -1,4 +1,4 @@
-﻿package docs
+package docs
 
 import "github.com/swaggo/swag"
 

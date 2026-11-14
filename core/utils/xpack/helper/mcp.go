@@ -1,4 +1,4 @@
-﻿﻿package helper
+package helper
 
 import (
 	"github.com/NebulaPanel/nebulapanel/core/app/auth"

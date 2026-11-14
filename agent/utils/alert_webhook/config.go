@@ -1,4 +1,4 @@
-﻿﻿package alert_webhook
+package alert_webhook
 
 import (
 	"encoding/json"

@@ -1,4 +1,4 @@
-﻿package protocol
+package protocol
 
 // VM helper protocol definition shared by the core caller and helper binary.
 

@@ -1,4 +1,4 @@
-﻿﻿package apikey_migration
+package apikey_migration
 
 import (
 	"errors"

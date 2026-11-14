@@ -1,4 +1,4 @@
-﻿﻿package mcpapi
+package mcpapi
 
 import (
 	"context"

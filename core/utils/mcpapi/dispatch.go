@@ -1,4 +1,4 @@
-﻿﻿// Package mcpapi sends an already-authorized MCP operation through the existing
+// Package mcpapi sends an already-authorized MCP operation through the existing
 // Core HTTP application without exposing an HTTP header-based identity bridge.
 package mcpapi
 

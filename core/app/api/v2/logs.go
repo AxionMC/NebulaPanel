@@ -1,4 +1,4 @@
-﻿﻿package v2
+package v2
 
 import (
 	"github.com/NebulaPanel/nebulapanel/core/app/api/v2/helper"

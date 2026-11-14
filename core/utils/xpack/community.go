@@ -1,4 +1,4 @@
-﻿﻿//go:build !xpack && !enterprise
+//go:build !xpack && !enterprise
 
 package xpack
 

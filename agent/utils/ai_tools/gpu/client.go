@@ -1,4 +1,4 @@
-﻿﻿package gpu
+package gpu
 
 import (
 	"context"

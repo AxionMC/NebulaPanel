@@ -1,4 +1,4 @@
-﻿﻿package terminal
+package terminal
 
 import (
 	"encoding/base64"

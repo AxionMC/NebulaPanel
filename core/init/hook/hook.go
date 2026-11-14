@@ -1,4 +1,4 @@
-﻿﻿package hook
+package hook
 
 import (
 	"os/exec"

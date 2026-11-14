@@ -1,4 +1,4 @@
-﻿package ctl_conf
+package ctl_conf
 
 import (
 	"fmt"

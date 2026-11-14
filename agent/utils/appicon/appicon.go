@@ -1,4 +1,4 @@
-﻿﻿package appicon
+package appicon
 
 import (
 	"fmt"

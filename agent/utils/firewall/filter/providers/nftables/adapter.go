@@ -1,4 +1,4 @@
-﻿﻿package nftables
+package nftables
 
 import (
 	"context"

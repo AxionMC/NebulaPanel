@@ -1,4 +1,4 @@
-﻿﻿package apikey_audit
+package apikey_audit
 
 import (
 	"errors"

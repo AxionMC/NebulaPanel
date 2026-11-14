@@ -1,4 +1,4 @@
-﻿GOCMD=go
+GOCMD=go
 GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOARCH=$(shell go env GOARCH)

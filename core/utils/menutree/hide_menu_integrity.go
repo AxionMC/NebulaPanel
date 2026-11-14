@@ -1,4 +1,4 @@
-﻿﻿package menutree
+package menutree
 
 import "github.com/NebulaPanel/nebulapanel/core/app/dto"
 

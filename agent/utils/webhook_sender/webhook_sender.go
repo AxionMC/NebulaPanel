@@ -1,4 +1,4 @@
-﻿﻿package webhook_sender
+package webhook_sender
 
 import (
 	"bytes"

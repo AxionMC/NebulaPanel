@@ -1,4 +1,4 @@
-﻿﻿package app
+package app
 
 import (
 	"github.com/NebulaPanel/nebulapanel/agent/utils/docker"

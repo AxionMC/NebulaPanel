@@ -1,4 +1,4 @@
-﻿﻿package docker_guard
+package docker_guard
 
 import (
 	"github.com/NebulaPanel/nebulapanel/agent/buserr"

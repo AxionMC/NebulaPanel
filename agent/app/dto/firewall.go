@@ -1,4 +1,4 @@
-﻿﻿package dto
+package dto
 
 import (
 	"github.com/NebulaPanel/nebulapanel/agent/utils/firewall"

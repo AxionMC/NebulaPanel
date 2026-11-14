@@ -1,4 +1,4 @@
-﻿﻿package ntp
+package ntp
 
 import (
 	"encoding/binary"

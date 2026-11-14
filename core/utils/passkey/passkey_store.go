@@ -1,4 +1,4 @@
-﻿﻿package passkey
+package passkey
 
 import (
 	"crypto/rand"

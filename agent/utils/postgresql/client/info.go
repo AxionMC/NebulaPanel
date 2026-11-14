@@ -1,4 +1,4 @@
-﻿﻿package client
+package client
 
 import (
 	"github.com/NebulaPanel/nebulapanel/agent/app/task"

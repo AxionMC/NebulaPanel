@@ -1,4 +1,4 @@
-﻿﻿package business
+package business
 
 import (
 	"github.com/NebulaPanel/nebulapanel/agent/app/dto"

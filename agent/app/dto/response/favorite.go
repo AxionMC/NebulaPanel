@@ -1,4 +1,4 @@
-﻿﻿package response
+package response
 
 import "github.com/NebulaPanel/nebulapanel/agent/app/model"
 
