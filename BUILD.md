@@ -218,8 +218,12 @@ WORKDIR /opt/NebulaPanel
 COPY NebulaPanel-core /usr/local/bin/NebulaPanel-core
 RUN chmod +x /usr/local/bin/NebulaPanel-core
 EXPOSE 9999
-ENTRYPOINT ["NebulaPanel-core", "start"]
+ENTRYPOINT ["NebulaPanel-core"]
 ```
+
+> 注意：`NebulaPanel-core` 与 `NebulaPanel-agent` 都没有 `start` 子命令。
+> RootCmd 不传参数即进入服务启动流程（见 `core/cmd/server/cmd/root.go`），
+> 传 `start` 会直接报 `unknown command "start"` 并退出。
 
 `/opt/NebulaPanel/docker/Dockerfile.agent`：
 
@@ -232,7 +236,7 @@ RUN mkdir -p /opt/NebulaPanel/{conf,db,secret,logs,backup,geo,tmp}
 WORKDIR /opt/NebulaPanel
 COPY NebulaPanel-agent /usr/local/bin/NebulaPanel-agent
 RUN chmod +x /usr/local/bin/NebulaPanel-agent
-ENTRYPOINT ["NebulaPanel-agent", "start"]
+ENTRYPOINT ["NebulaPanel-agent"]
 ```
 
 `/opt/NebulaPanel/docker/docker-compose.yml`：

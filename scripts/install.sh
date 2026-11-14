@@ -284,7 +284,10 @@ RUN chmod +x /usr/local/bin/NebulaPanel-core
 
 EXPOSE 9999
 
-ENTRYPOINT ["NebulaPanel-core", "start"]
+# 注意：NebulaPanel-core 没有 start 子命令，
+# RootCmd 不传参数即进入 server.Start()（见 core/cmd/server/cmd/root.go）。
+# 传 start 会报 unknown command "start" 并退出。
+ENTRYPOINT ["NebulaPanel-core"]
 EOF
 }
 
@@ -309,7 +312,9 @@ RUN chmod +x /usr/local/bin/NebulaPanel-agent
 
 VOLUME /var/run/docker.sock
 
-ENTRYPOINT ["NebulaPanel-agent", "start"]
+# 同 core：agent 的 RootCmd 不带参数即启动（Use: "NebulaPanel-agent"），
+# 没有 start 子命令。
+ENTRYPOINT ["NebulaPanel-agent"]
 EOF
 }
 

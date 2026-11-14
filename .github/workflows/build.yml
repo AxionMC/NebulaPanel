@@ -388,7 +388,8 @@ jobs:
           RUN chmod +x /usr/local/bin/NebulaPanel-core /usr/local/bin/NebulaPanel-agent
 
           EXPOSE 9999
-          ENTRYPOINT ["NebulaPanel-core", "start"]
+          # NebulaPanel-core 没有 start 子命令，不传参数即启动
+          ENTRYPOINT ["NebulaPanel-core"]
           EOF
 
       - name: Set up QEMU

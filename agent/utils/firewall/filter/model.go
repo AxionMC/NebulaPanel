@@ -248,9 +248,18 @@ func (d Direction) valid() bool {
 	return d == DirectionInput
 }
 
+// isBasicChain 判断是否为受管的 iptables/nftables 内置链。
+//
+// 注意：Normalize() 会把 chain 统一转为大写（iptables 链名本身不区分大小写，
+// 且上游链名是全大写的 1PANEL_BASIC），因此这里必须用大写形式比较。
+// 本分支将 1PANEL_* 重命名为 NebulaPanel_* 后，常量变成大小写混合，
+// 若直接用常量做 switch 会永远不匹配（NEBULAPANEL_BASIC != NebulaPanel_BASIC），
+// 故统一 ToUpper 后再比较。
 func isBasicChain(chain string) bool {
-	switch chain {
-	case BasicBeforeChain, IptablesInputChain, BasicAfterChain:
+	switch strings.ToUpper(strings.TrimSpace(chain)) {
+	case strings.ToUpper(BasicBeforeChain),
+		strings.ToUpper(IptablesInputChain),
+		strings.ToUpper(BasicAfterChain):
 		return true
 	default:
 		return false
