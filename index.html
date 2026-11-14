@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NebulaPanel · 星云运维面板</title>
+<meta name="description" content="NebulaPanel 是一款现代化开源 Linux 服务器运维管理面板，支持 AI 管理、可视化运维、快速建站、容器管理与一键备份。">
+<style>
+:root{
+  --purple:#7B2CBF;
+  --purple-dark:#5A189A;
+  --purple-deep:#2E0A57;
+  --purple-light:#C39BD3;
+  --bg:#0F0E16;
+  --bg-soft:#1A1826;
+  --bg-card:#12101D;
+  --text:#E8E2F4;
+  --text-dim:#9A92B8;
+  --border:rgba(123,44,191,.22);
+  --green:#10B981;
+  --amber:#F59E0B;
+  --blue:#3B82F6;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.7;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+/* 星云背景 */
+.bg-glow{
+  position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(circle at 15% 12%, rgba(123,44,191,.28), transparent 42%),
+    radial-gradient(circle at 85% 8%, rgba(90,24,154,.22), transparent 40%),
+    radial-gradient(circle at 50% 92%, rgba(59,130,246,.10), transparent 45%);
+}
+.bg-stars{
+  position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.55;
+  background-image:
+    radial-gradient(1.5px 1.5px at 20% 30%, #fff, transparent),
+    radial-gradient(1px 1px at 60% 20%, #C39BD3, transparent),
+    radial-gradient(1.5px 1.5px at 80% 60%, #fff, transparent),
+    radial-gradient(1px 1px at 35% 75%, #9A6BD2, transparent),
+    radial-gradient(1px 1px at 90% 35%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 8% 85%, #C39BD3, transparent),
+    radial-gradient(1px 1px at 70% 88%, #fff, transparent),
+    radial-gradient(1px 1px at 45% 45%, #7B2CBF, transparent);
+  background-size:100% 100%;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+
+/* 导航 */
+nav{
+  position:sticky;top:0;z-index:50;
+  backdrop-filter:blur(18px);
+  background:rgba(15,14,22,.72);
+  border-bottom:1px solid var(--border);
+}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:66px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;font-size:17px;letter-spacing:.3px}
+.logo-mark{
+  width:34px;height:34px;border-radius:10px;
+  background:linear-gradient(135deg,var(--purple) 0%,var(--purple-dark) 100%);
+  display:grid;place-items:center;
+  box-shadow:0 4px 16px rgba(123,44,191,.45);
+  font-size:17px;
+}
+.nav-links{display:flex;gap:26px;font-size:14px}
+.nav-links a{color:var(--text-dim);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--purple-light)}
+@media(max-width:760px){.nav-links{display:none}}
+
+/* Hero */
+header{padding:92px 0 72px;text-align:center}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:7px 16px;border-radius:100px;font-size:13px;
+  background:rgba(123,44,191,.14);
+  border:1px solid var(--border);
+  color:var(--purple-light);
+  margin-bottom:26px;
+}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+h1{
+  font-size:clamp(34px,5.6vw,60px);
+  line-height:1.18;font-weight:800;letter-spacing:-1px;
+  margin-bottom:20px;
+}
+h1 .grad{
+  background:linear-gradient(135deg,#C39BD3 0%,var(--purple) 55%,#9A4FD6 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.sub{
+  font-size:clamp(15px,2vw,18px);
+  color:var(--text-dim);max-width:660px;margin:0 auto 38px;
+}
+.cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:13px 30px;border-radius:11px;
+  font-size:15px;font-weight:600;text-decoration:none;
+  transition:transform .18s,box-shadow .18s,background .18s;
+  border:1px solid transparent;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--purple) 0%,var(--purple-dark) 100%);
+  color:#fff;
+  box-shadow:0 8px 26px rgba(123,44,191,.42);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(123,44,191,.56)}
+.btn-ghost{
+  background:rgba(255,255,255,.04);
+  border-color:var(--border);color:var(--text);
+}
+.btn-ghost:hover{background:rgba(123,44,191,.16);border-color:var(--purple);transform:translateY(-2px)}
+
+/* 安装命令 */
+.install-box{
+  margin:44px auto 0;max-width:760px;text-align:left;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 18px 48px rgba(0,0,0,.5);
+}
+.install-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 16px;
+  background:rgba(123,44,191,.10);
+  border-bottom:1px solid var(--border);
+  font-size:12.5px;color:var(--text-dim);
+}
+.dots{display:flex;gap:7px}
+.dots i{width:11px;height:11px;border-radius:50%;display:block}
+.dots i:nth-child(1){background:#FF5F57}
+.dots i:nth-child(2){background:#FEBC2E}
+.dots i:nth-child(3){background:#28C840}
+pre{
+  padding:18px 20px;overflow-x:auto;
+  font-family:"SF Mono",Consolas,"Liberation Mono",Menlo,monospace;
+  font-size:13.5px;line-height:1.85;
+  color:#D9BDEE;
+}
+pre .cmt{color:#5B536B}
+pre .cmd{color:#C39BD3;font-weight:600}
+.copy-btn{
+  background:rgba(123,44,191,.18);border:1px solid var(--border);
+  color:var(--purple-light);padding:4px 12px;border-radius:6px;
+  font-size:12px;cursor:pointer;transition:.2s;
+}
+.copy-btn:hover{background:rgba(123,44,191,.34);color:#fff}
+
+/* 通用区块 */
+section{padding:78px 0}
+.sec-title{text-align:center;margin-bottom:52px}
+.sec-title h2{
+  font-size:clamp(25px,3.6vw,36px);font-weight:750;letter-spacing:-.5px;
+  margin-bottom:12px;
+}
+.sec-title p{color:var(--text-dim);font-size:15px}
+
+/* 特性卡片 */
+.grid{display:grid;gap:20px}
+.grid-3{grid-template-columns:repeat(auto-fit,minmax(295px,1fr))}
+.card{
+  background:linear-gradient(160deg,rgba(26,24,38,.92),rgba(18,16,29,.92));
+  border:1px solid var(--border);
+  border-radius:15px;padding:28px 25px;
+  transition:transform .22s,border-color .22s,box-shadow .22s;
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--purple),transparent);
+  opacity:0;transition:opacity .22s;
+}
+.card:hover{
+  transform:translateY(-5px);
+  border-color:rgba(123,44,191,.5);
+  box-shadow:0 16px 42px rgba(123,44,191,.20);
+}
+.card:hover::before{opacity:1}
+.card .ico{
+  width:46px;height:46px;border-radius:12px;
+  display:grid;place-items:center;font-size:21px;
+  background:rgba(123,44,191,.16);
+  border:1px solid var(--border);
+  margin-bottom:17px;
+}
+.card h3{font-size:16.5px;font-weight:650;margin-bottom:9px}
+.card p{font-size:14px;color:var(--text-dim);line-height:1.75}
+
+/* 步骤 */
+.steps{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.step{
+  border:1px solid var(--border);border-radius:14px;padding:24px 22px;
+  background:rgba(18,16,29,.7);position:relative;
+}
+.step .num{
+  position:absolute;top:-13px;left:22px;
+  width:29px;height:29px;border-radius:9px;
+  background:linear-gradient(135deg,var(--purple),var(--purple-dark));
+  display:grid;place-items:center;font-size:13.5px;font-weight:700;
+  box-shadow:0 4px 14px rgba(123,44,191,.5);
+}
+.step h4{font-size:15px;margin:9px 0 8px;font-weight:650}
+.step p{font-size:13.5px;color:var(--text-dim)}
+.step code{
+  background:rgba(123,44,191,.16);padding:1.5px 7px;border-radius:5px;
+  font-size:12.5px;color:var(--purple-light);
+  font-family:"SF Mono",Consolas,monospace;
+}
+
+/* 下载表 */
+.tbl{
+  width:100%;border-collapse:separate;border-spacing:0;
+  border:1px solid var(--border);border-radius:13px;overflow:hidden;
+  font-size:14px;
+}
+.tbl th{
+  background:rgba(123,44,191,.13);
+  padding:13px 18px;text-align:left;font-weight:600;
+  color:var(--purple-light);font-size:13px;
+}
+.tbl td{padding:13px 18px;border-top:1px solid rgba(123,44,191,.12)}
+.tbl tr:hover td{background:rgba(123,44,191,.05)}
+.tbl a{color:var(--purple-light);text-decoration:none;font-family:"SF Mono",Consolas,monospace;font-size:13px}
+.tbl a:hover{color:#fff;text-decoration:underline}
+.tag{
+  display:inline-block;padding:2.5px 10px;border-radius:100px;
+  font-size:11.5px;font-weight:600;
+}
+.tag-amd{background:rgba(16,185,129,.16);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.tag-soon{background:rgba(245,158,11,.14);color:var(--amber);border:1px solid rgba(245,158,11,.28)}
+
+/* 提示条 */
+.note{
+  display:flex;gap:13px;padding:18px 21px;border-radius:12px;
+  background:rgba(245,158,11,.07);
+  border:1px solid rgba(245,158,11,.26);
+  font-size:13.5px;color:#E8D9B8;
+  margin-top:26px;
+}
+.note .ni{font-size:17px;flex-shrink:0}
+
+/* 页脚 */
+footer{
+  border-top:1px solid var(--border);
+  padding:36px 0;text-align:center;
+  color:var(--text-dim);font-size:13px;
+  background:rgba(18,16,29,.5);
+}
+footer a{color:var(--purple-light);text-decoration:none}
+footer a:hover{text-decoration:underline}
+footer .sep{margin:0 9px;opacity:.35}
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="bg-stars"></div>
+
+<nav>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo-mark">✦</div>
+      <span>NebulaPanel</span>
+    </div>
+    <div class="nav-links">
+      <a href="#features">功能特性</a>
+      <a href="#install">快速安装</a>
+      <a href="#download">下载</a>
+      <a href="#notes">说明</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <div class="badge"><span class="dot"></span>V1.0.0 正式版已发布</div>
+    <h1>现代化开源<br><span class="grad">Linux 服务器运维面板</span></h1>
+    <p class="sub">NebulaPanel 基于 Go + Vue 3 构建，提供主机监控、容器管理、网站部署、数据库运维与一键备份的一站式解决方案。开箱即用，一条命令完成部署。</p>
+    <div class="cta">
+      <a href="#install" class="btn btn-primary">立即安装 →</a>
+      <a href="#features" class="btn btn-ghost">了解功能</a>
+    </div>
+
+    <div class="install-box">
+      <div class="install-head">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <span>root@server ~ 一键安装</span>
+        <button class="copy-btn" onclick="copyCmd()">复制</button>
+      </div>
+      <pre id="cmd"><span class="cmt"># 下载安装脚本并执行（全程交互式）</span>
+<span class="cmd">curl</span> -fsSL https://resource.hongkongyun.top/install.sh -o install.sh
+<span class="cmd">sudo bash</span> install.sh</pre>
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <div class="sec-title">
+      <h2>核心功能</h2>
+      <p>从裸机到应用，一个面板全部搞定</p>
+    </div>
+    <div class="grid grid-3">
+      <div class="card">
+        <div class="ico">🖥️</div>
+        <h3>主机监控</h3>
+        <p>实时查看 CPU、内存、磁盘、网络负载，支持历史曲线与告警通知，异常一眼可见。</p>
+      </div>
+      <div class="card">
+        <div class="ico">🐳</div>
+        <h3>容器管理</h3>
+        <p>基于 Docker 的容器、镜像、网络、存储卷与 Compose 编排管理，可视化操作无需记命令。</p>
+      </div>
+      <div class="card">
+        <div class="ico">🌐</div>
+        <h3>快速建站</h3>
+        <p>深度集成 WordPress、Halo 等主流建站程序，一键绑定域名、自动申请 SSL 证书。</p>
+      </div>
+      <div class="card">
+        <div class="ico">🗄️</div>
+        <h3>数据库运维</h3>
+        <p>MySQL、PostgreSQL、Redis、MongoDB 统一管理，支持备份、恢复与慢查询分析。</p>
+      </div>
+      <div class="card">
+        <div class="ico">🛡️</div>
+        <h3>安全防护</h3>
+        <p>防火墙规则、IP 白名单、Fail2ban、WAF 与操作日志审计，全方位保障服务器安全。</p>
+      </div>
+      <div class="card">
+        <div class="ico">💾</div>
+        <h3>一键备份</h3>
+        <p>网站、数据库、配置一键打包备份，支持本地与云存储（S3、OSS、七牛等）异地容灾。</p>
+      </div>
+      <div class="card">
+        <div class="ico">⏱️</div>
+        <h3>计划任务</h3>
+        <p>可视化配置 Cron 定时任务，支持脚本、备份、日志清理与自定义 Shell 命令。</p>
+      </div>
+      <div class="card">
+        <div class="ico">📁</div>
+        <h3>文件管理</h3>
+        <p>在线文件浏览、编辑、上传下载与权限修改，内置代码编辑器，改配置不用连 SSH。</p>
+      </div>
+      <div class="card">
+        <div class="ico">🤖</div>
+        <h3>AI 能力集成</h3>
+        <p>内置 AI 网关与模型管理，可接入本地大模型或云端 API，为运维场景提供智能辅助。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install" style="background:rgba(18,16,29,.42)">
+  <div class="wrap">
+    <div class="sec-title">
+      <h2>快速安装</h2>
+      <p>支持 Debian / Ubuntu / CentOS / Rocky / AlmaLinux</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <h4>准备环境</h4>
+        <p>一台 x86_64 架构的 Linux 服务器，root 权限，能访问外网。Docker 会自动检测安装。</p>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h4>执行脚本</h4>
+        <p>运行 <code>sudo bash install.sh</code>，按提示填写端口、安全入口、管理员账号密码。</p>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h4>访问面板</h4>
+        <p>安装完成后浏览器打开 <code>http://服务器IP:端口/安全入口</code> 即可登录。</p>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <h4>日常管理</h4>
+        <p>使用 <code>npctl</code> 命令管理服务：<code>start</code> / <code>stop</code> / <code>restart</code> / <code>status</code> / <code>user-info</code>。</p>
+      </div>
+    </div>
+
+    <div class="note">
+      <span class="ni">💡</span>
+      <div>
+        安装过程全程交互，默认值可直接回车采用：安装目录 <b>/opt</b>、端口 <b>9999</b>、安全入口 <b>nebula</b>、账号 <b>admin</b>。
+        安装结束会询问是否将 Docker 镜像源替换为加速地址，按需选择即可。
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="download">
+  <div class="wrap">
+    <div class="sec-title">
+      <h2>二进制下载</h2>
+      <p>也可手动下载后自行部署</p>
+    </div>
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>文件名</th>
+          <th>说明</th>
+          <th>架构</th>
+          <th>下载</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>NebulaPanel-core-amd64</code></td>
+          <td>面板核心服务</td>
+          <td><span class="tag tag-amd">amd64</span></td>
+          <td><a href="/NebulaPanel-core-amd64">下载</a></td>
+        </tr>
+        <tr>
+          <td><code>NebulaPanel-agent-amd64</code></td>
+          <td>节点代理服务</td>
+          <td><span class="tag tag-amd">amd64</span></td>
+          <td><a href="/NebulaPanel-agent-amd64">下载</a></td>
+        </tr>
+        <tr>
+          <td><code>install.sh</code></td>
+          <td>交互式安装脚本</td>
+          <td><span class="tag tag-amd">通用</span></td>
+          <td><a href="/install.sh">下载</a></td>
+        </tr>
+        <tr>
+          <td>ARM64 版本</td>
+          <td>暂未提供，需自行编译</td>
+          <td><span class="tag tag-soon">规划中</span></td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="notes" style="background:rgba(18,16,29,.42)">
+  <div class="wrap">
+    <div class="sec-title">
+      <h2>安装说明</h2>
+      <p>部署前请知悉以下事项</p>
+    </div>
+    <div class="grid grid-3">
+      <div class="card">
+        <div class="ico">🔧</div>
+        <h3>架构限制</h3>
+        <p>当前发布包仅提供 <b>amd64（x86_64）</b>。ARM64 服务器安装脚本会直接提示不支持，需从源码自行编译。</p>
+      </div>
+      <div class="card">
+        <div class="ico">📦</div>
+        <h3>Docker 依赖</h3>
+        <p>脚本会先检测 Docker：已安装则跳过，未安装则通过官方源自动安装。部署采用 host 网络模式。</p>
+      </div>
+      <div class="card">
+        <div class="ico">🗂️</div>
+        <h3>数据目录</h3>
+        <p>默认安装到 <b>/opt/NebulaPanel</b>，配置、数据库、日志、备份均在此目录下，重装不会清空。</p>
+      </div>
+      <div class="card">
+        <div class="ico">🔄</div>
+        <h3>版本更新</h3>
+        <p>V1.0.0 已移除面板内置在线更新功能。升级方式为获取新二进制后重新执行安装脚本，数据保留。</p>
+      </div>
+      <div class="card">
+        <div class="ico">🔐</div>
+        <h3>安全入口</h3>
+        <p>安装时设置的安全入口会作为访问路径后缀，建议使用不易猜测的字符串，降低被扫描风险。</p>
+      </div>
+      <div class="card">
+        <div class="ico">🛠️</div>
+        <h3>故障排查</h3>
+        <p>服务异常时先执行 <b>npctl status</b> 查看容器状态，再用 <b>npctl logs</b> 查看实时日志定位问题。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>NebulaPanel · 现代化开源 Linux 服务器运维面板</div>
+    <div style="margin-top:9px">
+      <a href="https://github.com/AxionMC/NebulaPanel">GitHub</a>
+      <span class="sep">|</span>
+      <span>Apache License 2.0</span>
+      <span class="sep">|</span>
+      <span>V1.0.0</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+function copyCmd(){
+  var text = 'curl -fsSL https://resource.hongkongyun.top/install.sh -o install.sh\nsudo bash install.sh';
+  var btn = document.querySelector('.copy-btn');
+  function done(){
+    btn.textContent = '已复制';
+    setTimeout(function(){ btn.textContent = '复制'; }, 1600);
+  }
+  if (navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(done).catch(fallback);
+  } else {
+    fallback();
+  }
+  function fallback(){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch(e){ btn.textContent = '请手动复制'; }
+    document.body.removeChild(ta);
+  }
+}
+</script>
+</body>
+</html>

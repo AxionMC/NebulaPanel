@@ -34,11 +34,25 @@ func LoadFromFile(filePath, key string) (string, error) {
 	}
 	prefix := key + "="
 	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimRight(line, "\r")
 		if strings.HasPrefix(line, prefix) {
-			return strings.TrimSpace(strings.TrimPrefix(line, prefix)), nil
+			return normalizeValue(strings.TrimSpace(strings.TrimPrefix(line, prefix))), nil
 		}
 	}
 	return "", fmt.Errorf("error `%s` find in %s", key, filePath)
+}
+
+// normalizeValue 去掉值两侧成对的引号。
+// 兼容 `BASE_DIR="/opt"` 与 `BASE_DIR=/opt` 两种写法，
+// 避免带引号的值被当成路径后导致目录拼接错误。
+func normalizeValue(v string) string {
+	if len(v) >= 2 {
+		first, last := v[0], v[len(v)-1]
+		if (first == '"' && last == '"') || (first == '\'' && last == '\'') {
+			return v[1 : len(v)-1]
+		}
+	}
+	return v
 }
 
 func UpdateInFile(filePath, key, value string) error {

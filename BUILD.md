@@ -128,6 +128,8 @@ git push origin V1.0.0
 
 ### 方式一：一键安装脚本（推荐）
 
+> **架构说明**：当前发布包仅提供 **amd64（x86_64）**。在 ARM64 机器上运行安装脚本会被明确拒绝并提示从源码编译。
+
 在目标 Linux 服务器上以 root 运行：
 
 ```bash
@@ -136,10 +138,11 @@ cd NebulaPanel
 sudo bash scripts/install.sh
 ```
 
-或直接远程执行：
+或从资源站直接获取：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/scripts/install.sh | bash
+curl -fsSL https://resource.hongkongyun.top/install.sh -o install.sh
+sudo bash install.sh
 ```
 
 脚本为**全程交互式**，依次询问：
@@ -151,11 +154,24 @@ curl -fsSL https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/scripts/in
 5. 管理员密码（默认 `admin123`）
 6. 界面语言（默认 `zh`）
 
-版本固定为 `V1.0.0`，二进制从 GitHub Release 下载；若 Release 不存在则回退使用本地 `build/` 下的构建产物。
+版本固定为 `V1.0.0`，二进制从资源站 `https://resource.hongkongyun.top` 获取：
+
+| 文件 | 说明 |
+|------|------|
+| `NebulaPanel-core-amd64` | 面板核心服务 |
+| `NebulaPanel-agent-amd64` | 节点代理服务 |
+
+下载地址可用环境变量覆盖：
+
+```bash
+NP_BINARY_BASE=https://your.cdn.example.com sudo -E bash scripts/install.sh
+```
+
+资源站不可达时会回退使用本地 `build/` 下的构建产物；两者都拿不到则中止并给出明确提示。下载完成后会校验 ELF magic，防止拿到 HTML 错误页之类的假文件。
 
 脚本其余工作：
 
-1. 检测操作系统与架构（amd64 / arm64）
+1. 检测操作系统，架构仅允许 amd64（ARM64 直接拒绝）
 2. 安装系统依赖（curl, openssl, tar 等）
 3. 检测 Docker：已安装则跳过，未安装则自动安装
 4. 生成 `Dockerfile.core`、`Dockerfile.agent`、`docker-compose.yml`
@@ -165,6 +181,20 @@ curl -fsSL https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/scripts/in
 8. 交互式询问是否替换 Docker 镜像源为 `hub.002230.xyz:44300`
 
 安装完成后访问：`http://<服务器IP>:<端口>/<安全入口>`
+
+### 资源站介绍页
+
+仓库根目录的 `index.html` 是资源站的介绍页，可直接与两个二进制、`install.sh` 一起放到 Web 根目录：
+
+```
+网站根目录/
+├── index.html                 # 介绍页
+├── install.sh                 # 安装脚本
+├── NebulaPanel-core-amd64     # 核心服务
+└── NebulaPanel-agent-amd64    # 节点代理
+```
+
+介绍页中的下载链接指向 `/NebulaPanel-core-amd64` 等相对路径，与本目录结构一致，无需改动。
 
 ### 方式二：手动 Docker 部署
 

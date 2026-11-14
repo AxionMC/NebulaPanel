@@ -3,6 +3,8 @@
 # NebulaPanel Linux 运维面板 - 交互式 Docker 一键安装脚本
 # 基于 1Panel 源码重构，支持 Debian / Ubuntu / CentOS / Rocky / AlmaLinux
 #
+# 架构支持：仅 amd64（x86_64）
+#
 # 用法：
 #   curl -fsSL https://raw.githubusercontent.com/AxionMC/NebulaPanel/main/scripts/install.sh | bash
 #   或者本地：sudo bash scripts/install.sh
@@ -10,6 +12,9 @@
 # 说明：
 #   - 全程交互式，可自定义安装目录、端口、安全入口、管理员账号与密码
 #   - 面板版本固定为 V1.0.0，内置在线更新功能已移除
+#   - 二进制从 https://resource.hongkongyun.top 获取
+#     可用 NP_BINARY_BASE 环境变量覆盖：
+#       NP_BINARY_BASE=https://your.cdn sudo -E bash scripts/install.sh
 #   - 自动检测 Docker：已安装则跳过，未安装则自动安装
 #
 
@@ -77,10 +82,20 @@ detect_os() {
         exit 1
     fi
 
+    # 本发布包仅提供 amd64（x86_64）二进制
     case "$(uname -m)" in
-        x86_64|amd64) NP_ARCH="amd64" ;;
-        aarch64|arm64)  NP_ARCH="arm64" ;;
-        *) error "不支持的架构：$(uname -m)，仅支持 amd64 / arm64"; exit 1 ;;
+        x86_64|amd64)
+            NP_ARCH="amd64"
+            ;;
+        aarch64|arm64)
+            error "当前版本仅提供 amd64（x86_64）架构安装包，暂不支持 ARM64"
+            error "如生产环境为 ARM 服务器，请从源码自行编译：bash scripts/build.sh --arch arm64"
+            exit 1
+            ;;
+        *)
+            error "不支持的架构：$(uname -m)，本发布包仅支持 amd64（x86_64）"
+            exit 1
+            ;;
     esac
 
     info "检测到系统：${OS_ID} ${OS_VERSION_ID} 架构：${NP_ARCH}"
@@ -149,57 +164,103 @@ install_docker() {
 }
 
 ###############################################################################
-# 下载 NebulaPanel 二进制（用于构建 Docker 镜像）
-# 优先从 GitHub Release 下载，失败则回退到源码本地构建产物
+# 下载 NebulaPanel 二进制
+# 主源：NP_BINARY_BASE（自有资源站），文件名为 NebulaPanel-core-amd64 等
+# 回退：本地 build/ 目录（源码构建产物）
 ###############################################################################
 download_binaries() {
-    info "下载 NebulaPanel 二进制文件（版本：${NP_VERSION}, 架构：${NP_ARCH}）..."
+    info "下载 NebulaPanel 二进制（版本 ${NP_VERSION} / 架构 ${NP_ARCH}）..."
+    info "资源站：${NP_BINARY_BASE}"
 
     mkdir -p "${NP_BUILD_DIR}"
 
-    local tarball="NebulaPanel-linux-${NP_ARCH}.tar.gz"
-    local pkg_url="${NP_REPO_URL}/${tarball}"
-    local pkg_tmp="${NP_BUILD_DIR}/${tarball}"
+    local core_dst="${NP_BUILD_DIR}/NebulaPanel-core"
+    local agent_dst="${NP_BUILD_DIR}/NebulaPanel-agent"
 
-    info "下载地址：${pkg_url}"
-    if curl -fsSL --connect-timeout 30 --max-time 600 -o "${pkg_tmp}" "${pkg_url}"; then
-        tar -xzf "${pkg_tmp}" -C "${NP_BUILD_DIR}"
-        rm -f "${pkg_tmp}"
-        # Release 包内文件名为 NebulaPanel-core-<arch>，统一改名
-        if [ -f "${NP_BUILD_DIR}/NebulaPanel-core-${NP_ARCH}" ]; then
-            mv -f "${NP_BUILD_DIR}/NebulaPanel-core-${NP_ARCH}" "${NP_BUILD_DIR}/NebulaPanel-core"
+    local ok_core=0
+    local ok_agent=0
+
+    # 依次尝试主域名与备用路径，兼容用户把文件放在根目录或 kvm/ 之类的子目录
+    local candidates=(
+        "${NP_BINARY_BASE}/NebulaPanel-core-${NP_ARCH}"
+        "${NP_BINARY_BASE}/${NP_VERSION}/NebulaPanel-core-${NP_ARCH}"
+        "${NP_BINARY_BASE}/linux/NebulaPanel-core-${NP_ARCH}"
+    )
+
+    for url in "${candidates[@]}"; do
+        info "尝试下载 core：${url}"
+        if curl -fSL --connect-timeout 20 --retry 2 --max-time 600 \
+                --progress-bar -o "${core_dst}" "${url}" && [ -s "${core_dst}" ]; then
+            ok_core=1
+            break
         fi
-        if [ -f "${NP_BUILD_DIR}/NebulaPanel-agent-${NP_ARCH}" ]; then
-            mv -f "${NP_BUILD_DIR}/NebulaPanel-agent-${NP_ARCH}" "${NP_BUILD_DIR}/NebulaPanel-agent"
+        rm -f "${core_dst}"
+    done
+
+    local candidates_agent=(
+        "${NP_BINARY_BASE}/NebulaPanel-agent-${NP_ARCH}"
+        "${NP_BINARY_BASE}/${NP_VERSION}/NebulaPanel-agent-${NP_ARCH}"
+        "${NP_BINARY_BASE}/linux/NebulaPanel-agent-${NP_ARCH}"
+    )
+
+    for url in "${candidates_agent[@]}"; do
+        info "尝试下载 agent：${url}"
+        if curl -fSL --connect-timeout 20 --retry 2 --max-time 600 \
+                --progress-bar -o "${agent_dst}" "${url}" && [ -s "${agent_dst}" ]; then
+            ok_agent=1
+            break
         fi
-    else
-        warn "从 Release 下载失败，尝试使用本地已构建的二进制"
-        local core_local="${NP_SRC_DIR}/build/NebulaPanel-core-${NP_ARCH}"
-        local agent_local="${NP_SRC_DIR}/build/NebulaPanel-agent-${NP_ARCH}"
-        if [ ! -f "${core_local}" ]; then
-            core_local="${NP_SRC_DIR}/build/NebulaPanel-core"
-        fi
-        if [ ! -f "${agent_local}" ]; then
-            agent_local="${NP_SRC_DIR}/build/NebulaPanel-agent"
+        rm -f "${agent_dst}"
+    done
+
+    # 下载失败则回退到源码构建产物
+    if [ "${ok_core}" -eq 0 ] || [ "${ok_agent}" -eq 0 ]; then
+        warn "从资源站下载失败，尝试使用本地已构建的二进制"
+
+        if [ "${ok_core}" -eq 0 ]; then
+            for f in "${NP_SRC_DIR}/build/NebulaPanel-core-${NP_ARCH}" "${NP_SRC_DIR}/build/NebulaPanel-core"; do
+                if [ -s "${f}" ]; then
+                    cp -f "${f}" "${core_dst}"
+                    ok_core=1
+                    info "使用本地构建产物：${f}"
+                    break
+                fi
+            done
         fi
 
-        if [ -f "${core_local}" ] && [ -f "${agent_local}" ]; then
-            cp -f "${core_local}" "${NP_BUILD_DIR}/NebulaPanel-core"
-            cp -f "${agent_local}" "${NP_BUILD_DIR}/NebulaPanel-agent"
-        else
-            error "无法获取 NebulaPanel 二进制。请先在源码目录执行 make build_all，或检查 Release 是否已发布 ${NP_VERSION}"
-            exit 1
+        if [ "${ok_agent}" -eq 0 ]; then
+            for f in "${NP_SRC_DIR}/build/NebulaPanel-agent-${NP_ARCH}" "${NP_SRC_DIR}/build/NebulaPanel-agent"; do
+                if [ -s "${f}" ]; then
+                    cp -f "${f}" "${agent_dst}"
+                    ok_agent=1
+                    info "使用本地构建产物：${f}"
+                    break
+                fi
+            done
         fi
     fi
 
-    if [ ! -s "${NP_BUILD_DIR}/NebulaPanel-core" ] || [ ! -s "${NP_BUILD_DIR}/NebulaPanel-agent" ]; then
-        error "二进制文件缺失或为空，安装中止"
+    if [ "${ok_core}" -eq 0 ] || [ "${ok_agent}" -eq 0 ]; then
+        error "无法获取 NebulaPanel 二进制"
+        error "  请确认资源站可访问：${NP_BINARY_BASE}/NebulaPanel-core-${NP_ARCH}"
+        error "  或在源码目录执行 bash scripts/build.sh 后重试"
         exit 1
     fi
 
-    chmod 755 "${NP_BUILD_DIR}/NebulaPanel-core" "${NP_BUILD_DIR}/NebulaPanel-agent"
+    # 基本校验：必须是 Linux ELF
+    for f in "${core_dst}" "${agent_dst}"; do
+        local magic
+        magic=$(head -c 4 "${f}" | od -An -tx1 | tr -d ' \n')
+        if [ "${magic}" != "7f454c46" ]; then
+            error "$(basename "${f}") 不是有效的 Linux 可执行文件（magic=${magic}）"
+            error "请检查资源站上的文件是否完整、是否为 amd64 Linux 版本"
+            exit 1
+        fi
+    done
 
-    ok "二进制文件准备完成"
+    chmod 755 "${core_dst}" "${agent_dst}"
+
+    ok "二进制就绪：core $(du -h "${core_dst}" | cut -f1) / agent $(du -h "${agent_dst}" | cut -f1)"
 }
 
 ###############################################################################
@@ -272,6 +333,9 @@ services:
       - ${NP_BACKUP_DIR}:/opt/NebulaPanel/backup
       - ${NP_GEO_DIR}:/opt/NebulaPanel/geo
       - ${NP_TMP_DIR}:/opt/NebulaPanel/tmp
+      # ctl_conf 配置文件：程序启动时读取 BASE_DIR / ORIGINAL_VERSION 等
+      # 挂载为只读，容器内路径与上游约定一致
+      - ${NP_CONF_DIR}/npctl:/usr/local/bin/npctl:ro
     restart: always
     network_mode: host
 
@@ -283,6 +347,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${NP_HOME}:/opt/NebulaPanel
+      # 同上：agent 启动时 initBaseInfo() 会读该文件
+      - ${NP_CONF_DIR}/npctl:/usr/local/bin/npctl:ro
     restart: always
     network_mode: host
 EOF
@@ -351,39 +417,120 @@ EOF
 }
 
 ###############################################################################
-# 生成 npctl 管理 CLI
+# 生成 npctl
+#
+# 这一个文件身兼两职（与上游 1Panel 的 1pctl 设计一致）：
+#   1. 宿主机上的管理 CLI（bash 脚本）
+#   2. 程序读取的配置文件（顶部的 BASE_DIR= / ORIGINAL_PORT= 等键值行）
+#      agent 启动时会读 /usr/local/bin/npctl 取 BASE_DIR 与 ORIGINAL_VERSION，
+#      因此容器内也必须能看到这个文件（由 docker-compose 挂载）。
+#
+# 写入策略：
+#   - 必写：${NP_CONF_DIR}/npctl（安装目录，永远可写），供 compose 挂载
+#   - 尽力写：/usr/local/bin、/usr/bin（宿主机直接调用命令）
+#   - 任一系统目录失败都不中断安装
 ###############################################################################
 generate_npctl() {
-    info "生成 npctl 管理命令行..."
+    info "生成 npctl（管理命令 + 配置文件）..."
 
-    cat > /usr/local/bin/npctl <<EOF
+    local body
+    body="$(cat <<EOF
 #!/usr/bin/env bash
+#
+# NebulaPanel 管理命令行 (npctl)
+# 顶部键值行同时作为程序配置文件，请勿删除或改动格式。
+
+# 注意：值不加引号。程序侧按 key=value 直接取值，
+# 带引号会被当成值的一部分，导致路径/端口异常。
+BASE_DIR=${NP_INSTALL_DIR}
+ORIGINAL_PORT=${NP_PORT}
+ORIGINAL_VERSION=${NP_VERSION}
+ORIGINAL_USERNAME=${NP_USERNAME}
+ORIGINAL_PASSWORD=${NP_PASSWORD}
+ORIGINAL_ENTRANCE=${NP_ENTRANCE}
+LANGUAGE=${NP_LANGUAGE}
+CHANGE_USER_INFO=
+PANEL_EDITION=cn
+
 set -euo pipefail
-NP_PORT="${NP_PORT}"
-NP_ENTRANCE="${NP_ENTRANCE}"
 NP_HOME="${NP_HOME}"
-NP_VERSION="${NP_VERSION}"
+NP_COMPOSE="\${NP_HOME}/docker/docker-compose.yml"
 
 cmd=\${1:-help}
 case \$cmd in
-    start)  docker compose -f "\${NP_HOME}/docker/docker-compose.yml" up -d ;;
-    stop)   docker compose -f "\${NP_HOME}/docker/docker-compose.yml" stop ;;
-    restart) docker compose -f "\${NP_HOME}/docker/docker-compose.yml" restart ;;
-    status) docker compose -f "\${NP_HOME}/docker/docker-compose.yml" ps ;;
-    logs)   docker compose -f "\${NP_HOME}/docker/docker-compose.yml" logs -f --tail=200 ;;
+    start)   docker compose -f "\${NP_COMPOSE}" up -d ;;
+    stop)    docker compose -f "\${NP_COMPOSE}" stop ;;
+    restart) docker compose -f "\${NP_COMPOSE}" restart ;;
+    status)  docker compose -f "\${NP_COMPOSE}" ps ;;
+    logs)    docker compose -f "\${NP_COMPOSE}" logs -f --tail=200 ;;
     user-info)
-        echo "访问地址：http://\$(hostname -I | awk '{print \$1}'):\${NP_PORT}/\${NP_ENTRANCE}"
+        echo "访问地址：http://\$(hostname -I | awk '{print \$1}'):${NP_PORT}/${NP_ENTRANCE}"
         echo "账号：${NP_USERNAME}"
         echo "密码：${NP_PASSWORD}"
-        echo "版本：\${NP_VERSION}"
+        echo "版本：${NP_VERSION}"
         ;;
-    version) echo "NebulaPanel \${NP_VERSION}" ;;
+    version) echo "NebulaPanel ${NP_VERSION}" ;;
     *) echo "用法：npctl {start|stop|restart|status|logs|user-info|version}" ;;
 esac
 EOF
-    chmod 755 /usr/local/bin/npctl
+)"
 
-    ok "npctl 已安装到 /usr/local/bin/npctl"
+    # ---- 1. 写入安装目录（必需）----
+    local primary="${NP_CONF_DIR}/npctl"
+    if printf '%s\n' "${body}" > "${primary}" 2>/dev/null; then
+        chmod 755 "${primary}" 2>/dev/null || true
+        ok "配置文件已写入 ${primary}"
+    else
+        error "无法写入 ${primary}，安装无法继续"
+        exit 1
+    fi
+
+    # ---- 2. 尽力写入系统目录，供宿主机直接调用 ----
+    local system_path=""
+    for dir in /usr/local/bin /usr/bin /bin; do
+        [ -d "${dir}" ] || continue
+        local target="${dir}/npctl"
+
+        # immutable 预检
+        if [ -e "${target}" ] && command -v lsattr >/dev/null 2>&1; then
+            local attr
+            attr="$(lsattr "${target}" 2>/dev/null | awk '{print $1}')"
+            case "${attr}" in
+                *i*)
+                    warn "${target} 带 immutable 属性（chattr +i），跳过"
+                    info "  如需修复：chattr -i ${target}"
+                    continue
+                    ;;
+            esac
+        fi
+
+        if cp -f "${primary}" "${target}" 2>/dev/null; then
+            chmod 755 "${target}" 2>/dev/null || true
+            system_path="${target}"
+            break
+        fi
+        warn "写入 ${target} 失败（目录不可写或文件被锁定），尝试下一个路径"
+    done
+
+    if [ -n "${system_path}" ]; then
+        ok "管理命令已安装到 ${system_path}"
+    else
+        warn "未能把 npctl 安装到系统 PATH，面板运行不受影响"
+        echo ""
+        echo "  原因通常为以下之一："
+        echo "    - /usr/local/bin/npctl 被 chattr +i 锁定 → chattr -i /usr/local/bin/npctl"
+        echo "    - /usr/local/bin 或 /usr/bin 为只读挂载 → mount | grep usr"
+        echo ""
+        echo "  临时使用（无需安装）："
+        echo "    ${primary} status"
+        echo "    ${primary} user-info"
+        echo ""
+        echo "  或建立软链接（需目标可写）："
+        echo "    ln -sf ${primary} /usr/local/bin/npctl"
+        echo ""
+    fi
+
+    return 0
 }
 
 ###############################################################################
@@ -467,7 +614,12 @@ wait_and_print_result() {
     echo "  配置文件：${NP_CONF_DIR}/app.yaml"
     echo "  Docker 目录：${NP_DOCKER_DIR}"
     echo ""
-    echo "  管理命令：npctl {start|stop|restart|status|user-info}"
+    if command -v npctl >/dev/null 2>&1; then
+        echo "  管理命令：npctl {start|stop|restart|status|logs|user-info|version}"
+    else
+        echo "  管理命令（npctl 未安装到 PATH）："
+        echo "    ${NP_HOME}/npctl.sh {start|stop|restart|status|logs|user-info|version}"
+    fi
     echo ""
     echo "  Docker 容器："
     echo "    docker compose -f ${NP_DOCKER_DIR}/docker-compose.yml ps"
@@ -506,9 +658,11 @@ interactive_config() {
     # 版本已硬编码（内置在线更新已移除，后期按计划评估）
     NP_VERSION="V1.0.0"
 
-    # Release 下载地址已固定（GitHub Releases）
-    NP_RELEASE_BASE="https://github.com/AxionMC/NebulaPanel/releases/download"
-    NP_REPO_URL="${NP_RELEASE_BASE}/${NP_VERSION}"
+    # 二进制资源站（可被环境变量 NP_BINARY_BASE 覆盖）
+    # 服务器上传的两个文件：
+    #   NebulaPanel-core-amd64
+    #   NebulaPanel-agent-amd64
+    NP_BINARY_BASE="${NP_BINARY_BASE:-https://resource.hongkongyun.top}"
 
     echo ""
     ok "配置读取完成，开始安装..."
@@ -538,9 +692,17 @@ main() {
     NP_DOCKER_DIR="${NP_HOME}/docker"
     NP_BUILD_DIR="${NP_HOME}/.build"
 
+    # 目录必须在写 npctl 之前建好
+    mkdir -p "${NP_CONF_DIR}" "${NP_DB_DIR}" "${NP_SECRET_DIR}" \
+             "${NP_LOG_DIR}" "${NP_BACKUP_DIR}" "${NP_GEO_DIR}" \
+             "${NP_TMP_DIR}" "${NP_DOCKER_DIR}" "${NP_BUILD_DIR}"
+
+    # 顺序要点：npctl 必须早于容器启动生成。
+    # compose 会把它挂载到容器内 /usr/local/bin/npctl，
+    # 若宿主机源文件不存在，Docker 会把它创建成空目录，导致 agent 读配置失败。
+    generate_npctl
     download_binaries
     build_and_start
-    generate_npctl
     ask_replace_mirror
     wait_and_print_result
 }
