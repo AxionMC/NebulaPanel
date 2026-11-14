@@ -417,9 +417,13 @@ build_agent() {
     cd "${REPO_ROOT}/agent" || die "找不到 agent 目录"
     rm -f "${BUILD_DIR}/${AGENT_NAME}-${TARGET_ARCH}"
 
-    # agent 依赖 vm helper 脚本（若存在）
+    # KVM 辅助二进制（体积大、按架构分发，不在版本库中）
+    # embed 使用 all:bin 目录形式，缺失也能编译，仅 KVM 功能不可用
     if [ -f utils/vm/helper/prepare.sh ]; then
-        bash utils/vm/helper/prepare.sh >>"${LOG_FILE}" 2>&1 || warn "vm helper 准备脚本返回非 0，忽略"
+        log "准备 KVM 辅助二进制（失败不影响编译）..."
+        bash utils/vm/helper/prepare.sh >>"${LOG_FILE}" 2>&1 \
+            || warn "KVM 辅助二进制准备失败，跳过（KVM 功能将不可用）"
+        ls -la utils/vm/helper/bin >>"${LOG_FILE}" 2>&1 || true
     fi
 
     if go build -mod=mod -trimpath -ldflags '-s -w' \
@@ -467,6 +471,7 @@ diag_agent() {
         echo "\$ go version";  go version
         echo "\$ head -12 go.mod"; head -12 go.mod
         echo "\$ grep lego go.mod go.sum"; grep -n lego go.mod go.sum || true
+        echo "\$ ls utils/vm/helper/bin"; ls -la utils/vm/helper/bin || true
         echo "\$ go build ./cmd/server（完整输出）"
         go build -mod=mod -o /dev/null ./cmd/server 2>&1 | head -120
     } )

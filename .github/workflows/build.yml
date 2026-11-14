@@ -255,6 +255,15 @@ jobs:
           go mod tidy
           go list ./cmd/server
 
+      - name: Prepare VM helper binaries
+        shell: bash
+        # 非致命步骤：KVM 辅助二进制体积大、按架构分发，不在版本库中。
+        # embed 已改为 all:bin 目录形式，缺失时仍可编译，仅 KVM 功能不可用。
+        run: |
+          bash agent/utils/vm/helper/prepare.sh || true
+          echo "--- helper bin 目录 ---"
+          ls -la agent/utils/vm/helper/bin || true
+
       - name: Build ${{ env.CORE_NAME }}
         working-directory: core
         shell: bash

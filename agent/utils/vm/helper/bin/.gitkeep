@@ -1,0 +1,10 @@
+# 该文件确保 agent/utils/vm/helper/bin/ 目录始终存在于版本库中。
+#
+# 为什么需要：embedded_amd64.go / embedded_arm64.go 使用
+#   //go:embed all:bin
+# 嵌入整个 bin 目录。Go 要求被嵌入的目录存在且至少匹配一个文件，
+# 否则编译报 pattern bin/NebulaPanel-kvm-<arch>: no matching files found。
+#
+# 真实的 KVM 辅助二进制文件体积大且按架构分发，不纳入版本库，
+# 由 prepare.sh 在构建前下载放入本目录。缺失时不影响编译，
+# 仅 KVM 功能在运行期提示「NebulaPanel-kvm 不存在」。
