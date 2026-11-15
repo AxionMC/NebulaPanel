@@ -329,6 +329,10 @@ services:
       context: ${NP_DOCKER_DIR}
       dockerfile: ${NP_DOCKER_DIR}/Dockerfile.core
     container_name: nebulapanel-core
+    # 显式覆盖 ENTRYPOINT：Node 二进制没有 start 子命令，
+    # 镜像里的 ENTRYPOINT 若残留 start 参数会导致启动失败。
+    # 这里固定为不带参数，等同直接执行 NebulaPanel-core。
+    entrypoint: ["NebulaPanel-core"]
     # 使用 host 网络，面板直接监听 conn.port（默认 ${NP_PORT}），无需端口映射
     volumes:
       - ${NP_CONF_DIR}:/opt/NebulaPanel/conf
@@ -349,6 +353,8 @@ services:
       context: ${NP_DOCKER_DIR}
       dockerfile: ${NP_DOCKER_DIR}/Dockerfile.agent
     container_name: nebulapanel-agent
+    # 同 core：覆盖 ENTRYPOINT，避免残留 start 参数
+    entrypoint: ["NebulaPanel-agent"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${NP_HOME}:/opt/NebulaPanel

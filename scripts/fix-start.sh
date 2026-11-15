@@ -167,10 +167,63 @@ for d in /usr/local/bin /usr/bin; do
 done
 
 ###############################################################################
-# 3. 重建并启动
+# 2.5 在 compose 中用 entrypoint 覆盖镜像 ENTRYPOINT
+#
+# 这是最快生效的一层保险：即使镜像没重建成功，
+# compose 的 entrypoint 也会覆盖镜像里的 ENTRYPOINT，
+# 容器不会再带 start 参数启动。
 ###############################################################################
 echo ""
-info "重建容器..."
+info "在 compose 中覆盖 entrypoint（防止旧镜像残留 start 参数）..."
+
+patch_compose_entrypoint() {
+    local f="$1"
+
+    if grep -qE '^\s{4}entrypoint:' "$f" 2>/dev/null; then
+        ok "compose 已有 entrypoint 配置，跳过"
+        return 0
+    fi
+
+    local bak="${f}.bak.entry.$(date +%s)"
+    cp -f "$f" "$bak"
+
+    # 以 container_name 为锚点，在其后插入 entrypoint
+    awk '
+        { print }
+        /^[[:space:]]*container_name:[[:space:]]*nebulapanel-core[[:space:]]*$/ {
+            print "    entrypoint: [\"NebulaPanel-core\"]"
+        }
+        /^[[:space:]]*container_name:[[:space:]]*nebulapanel-agent[[:space:]]*$/ {
+            print "    entrypoint: [\"NebulaPanel-agent\"]"
+        }
+    ' "$bak" > "$f"
+
+    local cnt
+    cnt="$(grep -cE '^\s{4}entrypoint:' "$f" 2>/dev/null || echo 0)"
+    if [ "${cnt:-0}" -ge 2 ]; then
+        ok "entrypoint 覆盖已写入 compose（${cnt} 处）"
+    else
+        warn "只写入 ${cnt} 处，可能 compose 结构不同"
+        cp -f "$bak" "$f"
+        warn "已回滚 compose，将依赖镜像重建"
+    fi
+}
+
+patch_compose_entrypoint "$COMPOSE"
+
+echo ""
+echo "--- compose 中的 entrypoint ---"
+grep -nE '^\s{4}entrypoint:|container_name:' "$COMPOSE" | sed 's/^/  /'
+
+###############################################################################
+# 3. 重建镜像并启动
+#
+# 关键：ENTRYPOINT 写在镜像里，只做 --force-recreate 不会重建镜像，
+# 容器仍会使用旧镜像里带 start 的 ENTRYPOINT。
+# 必须先 build（或 up --build）才能让 Dockerfile 的修改生效。
+###############################################################################
+echo ""
+info "重建镜像并启动容器..."
 
 cd "$DOCKER_DIR" || die "无法进入 $DOCKER_DIR"
 
@@ -182,12 +235,22 @@ else
     die "未找到 docker compose"
 fi
 
-# 强制重建，让新的 ENTRYPOINT 生效
+# 停掉旧容器
+info "停止旧容器..."
+${DC} down 2>&1 | sed 's/^/  /' || true
+
+# 显式 build，确保 Dockerfile 变更被采纳
+info "构建镜像（这是让 ENTRYPOINT 生效的关键步骤）..."
+if ! ${DC} build 2>&1 | sed 's/^/  /'; then
+    warn "镜像构建返回非 0，继续尝试启动"
+fi
+
+info "启动容器..."
 ${DC} up -d --force-recreate 2>&1 | sed 's/^/  /'
 
 echo ""
-info "等待 10 秒..."
-sleep 10
+info "等待 12 秒..."
+sleep 12
 
 echo ""
 echo "--- 容器状态 ---"
@@ -200,6 +263,18 @@ ${DC} logs --tail=30 nebulapanel-core 2>&1 | sed 's/^/  /' | tee /tmp/np-core.lo
 echo ""
 echo "--- agent 日志（最后 40 行）---"
 ${DC} logs --tail=40 nebulapanel-agent 2>&1 | sed 's/^/  /' | tee /tmp/np-agent2.log
+
+# 如果仍然报 start 错误，说明镜像缓存没清掉，做一次无缓存重建
+if grep -q 'unknown command "start"' /tmp/np-core.log 2>/dev/null; then
+    echo ""
+    warn "仍检测到 start 错误，执行无缓存重建（耗时较长）..."
+    ${DC} build --no-cache 2>&1 | sed 's/^/  /' || true
+    ${DC} up -d --force-recreate 2>&1 | sed 's/^/  /'
+    echo ""
+    info "再等 15 秒..."
+    sleep 15
+    ${DC} logs --tail=30 nebulapanel-core 2>&1 | sed 's/^/  /' | tee /tmp/np-core.log
+fi
 
 echo ""
 echo "========================================"
