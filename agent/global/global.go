@@ -2,6 +2,8 @@ package global
 
 import (
 	"context"
+	"os"
+	"strings"
 	"sync"
 
 	badger_db "github.com/NebulaPanel/nebulapanel/agent/init/cache/db"
@@ -65,31 +67,39 @@ func RemoveTaskCancel(taskID string) {
 	delete(TaskCtxMap, taskID)
 }
 
+// 资源站地址支持环境变量覆盖，便于容器化部署指向自有镜像：
+//
+//	environment:
+//	  - NP_RESOURCE_URL=https://resource.example.com
+//	  - NP_APP_REPO_URL=https://apps.example.com
+//
+// 未设置时回退到官方地址。
+func resourceURLOverride() string {
+	return strings.TrimRight(os.Getenv("NP_RESOURCE_URL"), "/")
+}
+
 func RepoURL() string {
+	if v := resourceURLOverride(); v != "" {
+		return v + "/package/v2"
+	}
 	if CONF.Base.IsEnterprise {
-		return "https://resource.fit2cloud.com/NebulaPanel/package/enterprise"
+		return "https://resource.fit2cloud.com/1Panel/package/enterprise"
 	}
-	if CONF.Base.Edition != "intl" {
-		return "https://resource.fit2cloud.com/NebulaPanel/package/v2"
-	}
-	return "https://resource.NebulaPanel.pro/v2"
+	return "https://resource.fit2cloud.com/1Panel/package/v2"
 }
 func ResourceURL() string {
+	if v := resourceURLOverride(); v != "" {
+		return v + "/resource/v2"
+	}
 	if CONF.Base.IsEnterprise {
-		return "https://resource.fit2cloud.com/NebulaPanel/resource/v2"
+		return "https://resource.fit2cloud.com/1Panel/resource/v2"
 	}
-	if CONF.Base.Edition != "intl" {
-		return "https://resource.fit2cloud.com/NebulaPanel/resource/v2"
-	}
-	return "https://resource.NebulaPanel.pro/v2/resource"
+	return "https://resource.fit2cloud.com/1Panel/resource/v2"
 }
 func AppRepoURL() string {
-	if CONF.Base.IsEnterprise {
-		return "https://apps-assets.fit2cloud.com"
+	if v := os.Getenv("NP_APP_REPO_URL"); v != "" {
+		return strings.TrimRight(v, "/")
 	}
-	if CONF.Base.Edition != "intl" {
-		return "https://apps-assets.fit2cloud.com"
-	}
-	return "https://apps.NebulaPanel.pro"
+	return "https://apps-assets.fit2cloud.com"
 }
 

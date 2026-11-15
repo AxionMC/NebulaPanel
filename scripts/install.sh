@@ -270,19 +270,27 @@ write_dockerfile_core() {
     cat > "${NP_DOCKER_DIR}/Dockerfile.core" <<'EOF'
 FROM debian:bookworm-slim
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates tzdata \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates tzdata \
+        tar gzip unzip xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
+# /etc/NebulaPanel 用于与 agent 共享 unix socket（agent.sock）
 RUN mkdir -p /opt/NebulaPanel/conf /opt/NebulaPanel/db /opt/NebulaPanel/secret \
              /opt/NebulaPanel/logs /opt/NebulaPanel/backup /opt/NebulaPanel/geo \
-             /opt/NebulaPanel/tmp
+             /opt/NebulaPanel/tmp /etc/NebulaPanel
 WORKDIR /opt/NebulaPanel
 
 COPY NebulaPanel-core /usr/local/bin/NebulaPanel-core
 RUN chmod +x /usr/local/bin/NebulaPanel-core
 
 EXPOSE 9999
+
+# GIN_MODE=release 抑制 debug 日志与警告（生产环境）
+ENV GIN_MODE=release
 
 # 注意：NebulaPanel-core 没有 start 子命令，
 # RootCmd 不传参数即进入 server.Start()（见 core/cmd/server/cmd/root.go）。
@@ -293,24 +301,52 @@ EOF
 
 ###############################################################################
 # 生成 Dockerfile（agent）
+#
+# agent 要管理宿主机容器，必须在容器内具备 docker CLI 与 compose 插件：
+#   - 通过 /var/run/docker.sock 与宿主 dockerd 通信
+#   - 执行 docker / docker compose 命令（应用商店、容器管理、编排）
+# 这里从 Docker 官方 apt 源安装 docker-ce-cli + docker-compose-plugin，
+# 避免依赖宿主机二进制路径（各发行版不一致）。
 ###############################################################################
 write_dockerfile_agent() {
     cat > "${NP_DOCKER_DIR}/Dockerfile.agent" <<'EOF'
 FROM debian:bookworm-slim
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates tzdata \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates curl gnupg tzdata \
+        procps iproute2 \
+        iptables nftables \
+        tar gzip unzip xz-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Docker 官方软件源：安装 CLI 与 compose 插件
+RUN install -m 0755 -d /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg \
+         -o /etc/apt/keyrings/docker.asc \
+    && chmod a+r /etc/apt/keyrings/docker.asc \
+    && . /etc/os-release \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian ${VERSION_CODENAME} stable" \
+         > /etc/apt/sources.list.d/docker.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        docker-ce-cli docker-compose-plugin \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /opt/NebulaPanel/conf /opt/NebulaPanel/db /opt/NebulaPanel/secret \
              /opt/NebulaPanel/logs /opt/NebulaPanel/backup /opt/NebulaPanel/geo \
-             /opt/NebulaPanel/tmp
+             /opt/NebulaPanel/tmp /etc/NebulaPanel
 WORKDIR /opt/NebulaPanel
 
 COPY NebulaPanel-agent /usr/local/bin/NebulaPanel-agent
 RUN chmod +x /usr/local/bin/NebulaPanel-agent
 
 VOLUME /var/run/docker.sock
+
+# GIN_MODE=release 抑制 debug 日志与警告（生产环境）
+ENV GIN_MODE=release
 
 # 同 core：agent 的 RootCmd 不带参数即启动（Use: "NebulaPanel-agent"），
 # 没有 start 子命令。
@@ -333,6 +369,12 @@ services:
     # 镜像里的 ENTRYPOINT 若残留 start 参数会导致启动失败。
     # 这里固定为不带参数，等同直接执行 NebulaPanel-core。
     entrypoint: ["NebulaPanel-core"]
+    environment:
+      - GIN_MODE=release
+      - TZ=Asia/Shanghai
+      # 资源站（语言包 / GeoIP / 应用图标）：可按需指向自有镜像
+      - NP_RESOURCE_URL=${NP_RESOURCE_URL:-https://resource.fit2cloud.com/1Panel}
+      - NP_APP_REPO_URL=${NP_APP_REPO_URL:-https://apps-assets.fit2cloud.com}
     # 使用 host 网络，面板直接监听 conn.port（默认 ${NP_PORT}），无需端口映射
     volumes:
       - ${NP_CONF_DIR}:/opt/NebulaPanel/conf
@@ -345,6 +387,10 @@ services:
       # ctl_conf 配置文件：程序启动时读取 BASE_DIR / ORIGINAL_VERSION 等
       # 挂载为只读，容器内路径与上游约定一致
       - ${NP_CONF_DIR}/npctl:/usr/local/bin/npctl:ro
+      # 与 agent 共享 unix socket 目录：
+      # core 通过 /etc/NebulaPanel/agent.sock 调用 agent，
+      # 两个容器必须挂载同一宿主目录才能互通。
+      - ${NP_ETC_DIR}:/etc/NebulaPanel
     restart: always
     network_mode: host
 
@@ -355,11 +401,19 @@ services:
     container_name: nebulapanel-agent
     # 同 core：覆盖 ENTRYPOINT，避免残留 start 参数
     entrypoint: ["NebulaPanel-agent"]
+    environment:
+      - GIN_MODE=release
+      - NP_RESOURCE_URL=${NP_RESOURCE_URL:-https://resource.fit2cloud.com/1Panel}
+      - NP_APP_REPO_URL=${NP_APP_REPO_URL:-https://apps-assets.fit2cloud.com}
+      # agent 与 core 用同一时区，避免日志与定时任务错位
+      - TZ=Asia/Shanghai
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${NP_HOME}:/opt/NebulaPanel
       # 同上：agent 启动时 initBaseInfo() 会读该文件
       - ${NP_CONF_DIR}/npctl:/usr/local/bin/npctl:ro
+      # agent 在此目录创建 /etc/NebulaPanel/agent.sock 供 core 调用
+      - ${NP_ETC_DIR}:/etc/NebulaPanel
     restart: always
     network_mode: host
 EOF
@@ -702,11 +756,13 @@ main() {
     NP_TMP_DIR="${NP_HOME}/tmp"
     NP_DOCKER_DIR="${NP_HOME}/docker"
     NP_BUILD_DIR="${NP_HOME}/.build"
+    # core 与 agent 之间的 socket 目录（容器内路径固定为 /etc/NebulaPanel）
+    NP_ETC_DIR="${NP_HOME}/etc"
 
     # 目录必须在写 npctl 之前建好
     mkdir -p "${NP_CONF_DIR}" "${NP_DB_DIR}" "${NP_SECRET_DIR}" \
              "${NP_LOG_DIR}" "${NP_BACKUP_DIR}" "${NP_GEO_DIR}" \
-             "${NP_TMP_DIR}" "${NP_DOCKER_DIR}" "${NP_BUILD_DIR}"
+             "${NP_TMP_DIR}" "${NP_DOCKER_DIR}" "${NP_BUILD_DIR}" "${NP_ETC_DIR}"
 
     # 顺序要点：npctl 必须早于容器启动生成。
     # compose 会把它挂载到容器内 /usr/local/bin/npctl，
