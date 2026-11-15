@@ -30,7 +30,21 @@ func Init() {
 	if config.Base.Mode != "" {
 		mode = config.Base.Mode
 	}
-	_, err := os.Stat("/opt/NebulaPanel/conf/app.yaml")
+
+	// 运行模式以运行时配置为准：
+	// conf.AppYaml 是编译期嵌入的默认配置（mode: dev），
+	// 容器化部署时会在 /opt/NebulaPanel/conf/app.yaml 写入 mode: stable。
+	// 因此这里优先读运行时文件的 mode，读不到才回退编译期默认值。
+	// 否则永远走 dev 分支，ctl_conf 中的 ORIGINAL_PORT 等一概不生效。
+	appConfPath := path.Join("/opt/NebulaPanel/conf", "app.yaml")
+	if data, rerr := os.ReadFile(appConfPath); rerr == nil {
+		runtimeConf := global.ServerConfig{}
+		if yerr := yaml.Unmarshal(data, &runtimeConf); yerr == nil && runtimeConf.Base.Mode != "" {
+			mode = runtimeConf.Base.Mode
+		}
+	}
+
+	_, err := os.Stat(appConfPath)
 	if mode == "dev" && err == nil {
 		v.SetConfigName("app")
 		v.AddConfigPath(path.Join("/opt/NebulaPanel/conf"))
@@ -65,7 +79,7 @@ func Init() {
 	if err := v.Unmarshal(&serverConfig); err != nil {
 		panic(err)
 	}
-	_, err = os.Stat("/opt/NebulaPanel/conf/app.yaml")
+	_, err = os.Stat(appConfPath)
 	if mode == "dev" && err == nil {
 		if serverConfig.Base.InstallDir != "" {
 			baseDir = serverConfig.Base.InstallDir
