@@ -47,6 +47,18 @@ read_input() {
     fi
     read -r input || true
     input="${input:-$default}"
+
+    # 清洗输入：
+    # 1. 去掉行尾 CR（Windows 终端粘贴常见）
+    # 2. 去掉行尾反斜杠 —— 键位误触会把 \ 带进密码/账号，
+    #    导致写入 app.yaml 与 npctl 的值和实际输入不一致，登录失败
+    # 3. 去掉首尾空白
+    input="${input%$'\r'}"
+    while [ "${input%\\}" != "${input}" ]; do
+        input="${input%\\}"
+    done
+    input="$(printf '%s' "$input" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+
     if [ -z "$input" ]; then
         error "该项不能为空，请重新输入"
         read_input "$prompt" "$default" "$var_name"

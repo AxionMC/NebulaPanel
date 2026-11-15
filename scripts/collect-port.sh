@@ -165,10 +165,35 @@ docker exec nebulapanel-core sh -c 'command -v ss >/dev/null && ss -ltn; command
 ###############################################################################
 echo ""
 echo "##### 11. 本机连通性 #####"
-for p in 8700 9999; do
-    CODE=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 3 "http://127.0.0.1:$p/" 2>/dev/null || echo "000")
-    echo "  http://127.0.0.1:$p/  →  HTTP $CODE"
+# 从 ctl_conf 读取实际配置端口，避免硬编码导致误判
+CFG_PORT="$(grep -E '^ORIGINAL_PORT=' "$NP_HOME/conf/npctl" 2>/dev/null | head -1 | cut -d= -f2 | tr -d '"'\''[:space:]')"
+APP_PORT="$(grep -E '^[[:space:]]*port:' "$NP_HOME/conf/app.yaml" 2>/dev/null | head -1 | sed 's/^[^:]*:[[:space:]]*//' | tr -d '"'\''[:space:]')"
+echo "  配置端口：ctl_conf=${CFG_PORT:-无}  app.yaml=${APP_PORT:-无}"
+
+PORTS_TO_TEST=""
+for p in "${APP_PORT}" "${CFG_PORT}" 8700 9999; do
+    [ -z "$p" ] && continue
+    case " $PORTS_TO_TEST " in *" $p "*) continue ;; esac
+    PORTS_TO_TEST="$PORTS_TO_TEST $p"
 done
+
+for p in $PORTS_TO_TEST; do
+    CODE=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 3 "http://127.0.0.1:$p/" 2>/dev/null || echo "000")
+    if [ "$CODE" = "000" ] || [ -z "$CODE" ]; then
+        echo "  http://127.0.0.1:$p/  →  连接失败（该端口未监听或被拦）"
+    else
+        echo "  http://127.0.0.1:$p/  →  HTTP $CODE  ✅ 可达"
+    fi
+done
+
+# 用安全入口再测一次（首页可能重定向）
+if [ -n "${CFG_PORT:-}" ]; then
+    ENT="$(grep -E '^ORIGINAL_ENTRANCE=' "$NP_HOME/conf/npctl" 2>/dev/null | cut -d= -f2 | tr -d '"'\''[:space:]')"
+    if [ -n "${ENT:-}" ]; then
+        CODE=$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 3 "http://127.0.0.1:${CFG_PORT}/${ENT}" 2>/dev/null || echo "000")
+        echo "  http://127.0.0.1:${CFG_PORT}/${ENT}  →  HTTP ${CODE:-000}"
+    fi
+fi
 
 ###############################################################################
 echo ""
