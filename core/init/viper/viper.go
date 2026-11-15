@@ -38,13 +38,17 @@ func Init() {
 			panic(fmt.Errorf("fatal error config file: %s", err))
 		}
 	} else {
-		baseDir = ctl_conf.Load("BASE_DIR")
-		port = ctl_conf.Load("ORIGINAL_PORT")
-		version = ctl_conf.Load("ORIGINAL_VERSION")
-		username = ctl_conf.Load("ORIGINAL_USERNAME")
-		password = ctl_conf.Load("ORIGINAL_PASSWORD")
-		entrance = ctl_conf.Load("ORIGINAL_ENTRANCE")
-		language = ctl_conf.Load("LANGUAGE")
+		// stable 模式（容器化部署）下，配置来自宿主机的 ctl_conf。
+		// 该文件是 /usr/local/bin/npctl，由安装脚本生成并挂载进容器。
+		// 若缺失或未挂载，不能让进程直接 panic —— 使用可解释的默认值回退，
+		// 否则容器会陷入 crash-loop。
+		baseDir = loadOr("BASE_DIR", baseDir)
+		port = loadOr("ORIGINAL_PORT", port)
+		version = loadOr("ORIGINAL_VERSION", version)
+		username = loadOr("ORIGINAL_USERNAME", username)
+		password = loadOr("ORIGINAL_PASSWORD", password)
+		entrance = loadOr("ORIGINAL_ENTRANCE", entrance)
+		language = loadOr("LANGUAGE", language)
 		edition = ctl_conf.LoadWithoutPanic("PANEL_EDITION")
 
 		reader := bytes.NewReader(conf.AppYaml)
@@ -104,5 +108,23 @@ func Init() {
 
 func loadChangeInfo() string {
 	return ctl_conf.LoadWithoutPanic("CHANGE_USER_INFO")
+}
+
+// loadOr 依次尝试：ctl_conf 键值 → 同名环境变量 → 默认值。
+// 用于容器化部署下 ctl_conf 缺失时不中断启动。
+//
+// 环境变量名与键名一致（如 ORIGINAL_PORT），
+// 便于在 docker-compose 的 environment 段直接覆盖端口等配置：
+//
+//	environment:
+//	  - ORIGINAL_PORT=8700
+func loadOr(key, fallback string) string {
+	if v := ctl_conf.LoadWithoutPanic(key); len(v) > 0 {
+		return v
+	}
+	if v := os.Getenv(key); len(v) > 0 {
+		return v
+	}
+	return fallback
 }
 
